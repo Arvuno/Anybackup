@@ -1,0 +1,34 @@
+---
+type: object_type
+id: storage_service
+name: 存储服务
+tags: []
+---
+
+## ObjectType: 存储服务
+
+用于描述备份相关的存储服务主数据，包括服务名称、类型、状态与唯一标识。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 26654ed8-0716-4184-bd03-6d2b9d03d4b3 | console_storage_svc |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| status | 存储服务状态 | integer | 存储服务运行状态 | status |
+| type | 存储服务类型 | integer | 存储服务类型 | type |
+| name | 存储服务名称 | string | 存储服务名称 | name |
+| id | 存储服务ID | string | 存储服务唯一标识 | id |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

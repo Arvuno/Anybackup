@@ -1,0 +1,142 @@
+---
+- name: Resolve public web contract for verification
+  ansible.builtin.set_fact:
+    verify_public_web_contract: "{{ (service_contracts | selectattr('contract_name', 'equalto', 'web_service') | list | first) | default({}) }}"
+    verify_core_agent_contract: "{{ (service_contracts | selectattr('contract_name', 'equalto', 'core_agent_service') | list | first) | default({}) }}"
+    verify_business_deployment_names: >-
+      {{
+        service_contracts
+        | rejectattr('contract_name', 'equalto', 'core_agent_service')
+        | map(attribute='deployment_name')
+        | list
+      }}
+
+- name: Copy smoke script to remote host
+  ansible.builtin.copy:
+    src: "{{ package_root }}/docs/操作文档/cluster-smoke.sh"
+    dest: "{{ remote_smoke_root }}/cluster-smoke.sh"
+    mode: "0755"
+
+- name: Wait for V9 infra statefulsets
+  ansible.builtin.command: "kubectl rollout status statefulset/{{ item }} -n {{ v9_infra.namespace }} --timeout={{ verify.timeout }}"
+  loop:
+    - v9-infra-postgres
+    - v9-infra-rabbitmq
+    - v9-infra-redis
+    - v9-infra-opensearch
+  changed_when: false
+
+- name: Wait for core agent deployment
+  ansible.builtin.command: "kubectl rollout status deployment/{{ verify_core_agent_contract.deployment_name }} -n {{ deployment_namespace }} --timeout={{ verify.timeout }}"
+  changed_when: false
+
+- name: Wait for enabled business deployments
+  ansible.builtin.command: "kubectl rollout status deployment/{{ item }} -n {{ deployment_namespace }} --timeout={{ verify.timeout }}"
+  loop: "{{ verify_business_deployment_names }}"
+  loop_control:
+    label: "{{ item }}"
+  changed_when: false
+
+- name: Wait for KWeaver application running pods again before summary
+  ansible.builtin.shell: |
+    set -euo pipefail
+    pods="$(kubectl get pods -n {{ kweaver.namespace }} --field-selector=status.phase=Running -o jsonpath='{range .items[*]}pod/{.metadata.name} {end}')"
+    if [ -n "$pods" ]; then
+      kubectl wait -n {{ kweaver.namespace }} --for=condition=Ready $pods --timeout={{ verify.timeout }}
+    fi
+  changed_when: false
+
+- name: Run cluster smoke script
+  ansible.builtin.command: "{{ remote_smoke_root }}/cluster-smoke.sh"
+  environment:
+    V9_NAMESPACE: "{{ deployment_namespace }}"
+    V9_INFRA_NAMESPACE: "{{ v9_infra.namespace }}"
+    KWEAVER_NAMESPACE: "{{ kweaver.namespace }}"
+    CORE_AGENT_DEPLOYMENT: "{{ verify_core_agent_contract.deployment_name }}"
+    BUSINESS_DEPLOYMENTS: "{{ verify_business_deployment_names | join(' ') }}"
+    SANDBOX_IMAGE: "{{ sandbox_image_resolved | default('') }}"
+    CORE_AGENT_MQ_READY_PATTERN: "{{ verify.core_agent_mq_ready_pattern | default('') }}"
+    CORE_AGENT_LOG_TAIL: "{{ verify.core_agent_log_tail | string }}"
+    POSTGRES_SERVICE: "{{ v9_infra.postgres.service_name }}"
+    RABBITMQ_SERVICE: "{{ v9_infra.rabbitmq.service_name }}"
+    REDIS_SERVICE: "{{ v9_infra.redis.service_name }}"
+    OPENSEARCH_SERVICE: "{{ v9_infra.opensearch.service_name }}"
+    KWEAVER_RUNTIME_SERVICE: "{{ kweaver_runtime_alias_service_name | default('') }}"
+    PUBLIC_BASE_URL: "{{ effective_public_base_url | default('') }}"
+    PUBLIC_WEB_SERVICE: "{{ (verify_public_web_contract.resource_name | default('')) if (network_public_web_service_present | default(false)) else '' }}"
+    PUBLIC_INGRESS_NAME: "{{ 'v9-web' if (network_public_web_service_present | default(false)) else '' }}"
+    ROLLOUT_TIMEOUT: "{{ verify.timeout }}"
+  changed_when: false
+
+- name: Collect V9 application summary
+  ansible.builtin.command: "kubectl get pods,svc -n {{ deployment_namespace }}"
+  register: v9_summary
+  changed_when: false
+
+- name: Collect V9 ingress summary
+  ansible.builtin.command: "kubectl get ingress -n {{ deployment_namespace }}"
+  register: v9_ingress_summary
+  changed_when: false
+  failed_when: false
+
+- name: Collect V9 infra summary
+  ansible.builtin.command: "kubectl get pods,svc -n {{ v9_infra.namespace }}"
+  register: v9_infra_summary
+  changed_when: false
+
+- name: Collect KWeaver summary
+  ansible.builtin.command: "kubectl get pods,svc -n {{ kweaver.namespace }}"
+  register: kweaver_summary
+  changed_when: false
+
+- name: Collect KWeaver resource summary
+  ansible.builtin.command: "kubectl get pods,svc -n {{ kweaver.resource_namespace }}"
+  register: kweaver_resource_summary
+  changed_when: false
+
+- name: Collect Helm releases for V9 namespace
+  ansible.builtin.command: "helm list -n {{ deployment_namespace }}"
+  register: helm_v9_summary
+  changed_when: false
+
+- name: Collect Helm releases for V9 infra namespace
+  ansible.builtin.command: "helm list -n {{ v9_infra.namespace }}"
+  register: helm_infra_summary
+  changed_when: false
+
+- name: Collect Helm releases for KWeaver namespace
+  ansible.builtin.command: "helm list -n {{ kweaver.namespace }}"
+  register: helm_kweaver_summary
+  changed_when: false
+
+- name: Print final application summary
+  ansible.builtin.debug:
+    msg: "{{ v9_summary.stdout_lines }}"
+
+- name: Print final infra summary
+  ansible.builtin.debug:
+    msg: "{{ v9_infra_summary.stdout_lines }}"
+
+- name: Print final ingress summary
+  ansible.builtin.debug:
+    msg: "{{ v9_ingress_summary.stdout_lines | default([]) }}"
+
+- name: Print final KWeaver summary
+  ansible.builtin.debug:
+    msg: "{{ kweaver_summary.stdout_lines }}"
+
+- name: Print final KWeaver resource summary
+  ansible.builtin.debug:
+    msg: "{{ kweaver_resource_summary.stdout_lines }}"
+
+- name: Print final Helm summary for V9
+  ansible.builtin.debug:
+    msg: "{{ helm_v9_summary.stdout_lines }}"
+
+- name: Print final Helm summary for V9 infra
+  ansible.builtin.debug:
+    msg: "{{ helm_infra_summary.stdout_lines }}"
+
+- name: Print final Helm summary for KWeaver
+  ansible.builtin.debug:
+    msg: "{{ helm_kweaver_summary.stdout_lines }}"

@@ -1,0 +1,37 @@
+---
+type: object_type
+id: rpo_rule
+name: RPO等级规则
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: RPO等级规则
+
+定义恢复点目标所对应的时间窗口和适用条件，用于筛选不同等级的备份方案。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 6a81c087-a50a-4128-93e7-874e56a48007 | rpo_rule |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | RPO规则ID | string | RPO 规则唯一标识。 | id |
+| name | RPO规则名称 | string | RPO 规则名称。 | name |
+| min_time | 最小分钟数 | integer | RPO 时间窗口下限，单位分钟。 | min_time |
+| max_time | 最大分钟数 | integer | RPO 时间窗口上限，单位分钟。 | max_time |
+| app_type_req | 适用条件 | string | 额外适用条件，例如 db_with_log_support。 | app_type_req |
+| rule_scope | 规则范围 | string | RPO 规则作用范围，例如分钟级保护、日级保护。 | rule_scope |
+| description | 说明 | text | RPO 规则说明。 | description |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

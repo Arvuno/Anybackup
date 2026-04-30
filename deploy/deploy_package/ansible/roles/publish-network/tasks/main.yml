@@ -1,0 +1,4 @@
+---
+- name: Publish or skip network resources
+  ansible.builtin.include_role:
+    name: internal/network_publish

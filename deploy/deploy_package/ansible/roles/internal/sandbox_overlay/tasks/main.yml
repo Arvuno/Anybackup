@@ -1,0 +1,252 @@
+---
+- name: Ensure remote sandbox overlay directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ remote_sandbox_build_dir }}"
+    - "{{ artifacts_root }}"
+
+- name: Check local foundation-cli file exists
+  ansible.builtin.stat:
+    path: "{{ package_root }}/bin/foundation-cli"
+  delegate_to: localhost
+  become: false
+  register: sandbox_local_foundation_cli
+
+- name: Assert local foundation-cli file exists
+  ansible.builtin.assert:
+    that:
+      - sandbox_local_foundation_cli.stat.exists | bool
+      - sandbox_local_foundation_cli.stat.size | default(0) | int >= foundation_cli_min_bytes | int
+    fail_msg: >-
+      Missing or placeholder-sized {{ package_root }}/bin/foundation-cli; cannot build
+      sandbox overlay image. Build the Linux amd64 binary from E:\Code\Service\foundation_cli:
+      PowerShell -ExecutionPolicy Bypass -File scripts/build-foundation-cli.ps1
+
+- name: Discover live sandbox executor pods
+  ansible.builtin.shell: |
+    set -euo pipefail
+    kubectl get pods -n {{ sandbox.restart_namespace | quote }} \
+      -l {{ sandbox.restart_selector | quote }} \
+      -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].image}{"\t"}{.spec.containers[0].imagePullPolicy}{"\n"}{end}'
+  args:
+    executable: /bin/bash
+  register: sandbox_executor_pods
+  changed_when: false
+  failed_when: false
+
+- name: Resolve live sandbox executor image and pull policy facts
+  ansible.builtin.set_fact:
+    sandbox_executor_lines: "{{ sandbox_executor_pods.stdout_lines | default([]) | reject('equalto', '') | list }}"
+    sandbox_first_executor_line: "{{ (sandbox_executor_pods.stdout_lines | default([]) | reject('equalto', '') | list | first) | default('') }}"
+    sandbox_executor_always_policy_lines: "{{ sandbox_executor_pods.stdout_lines | default([]) | select('search', '\\tAlways$') | list }}"
+
+- name: Resolve first live sandbox executor fields
+  ansible.builtin.set_fact:
+    sandbox_first_executor_fields: "{{ sandbox_first_executor_line.split('\t') }}"
+    sandbox_executor_image: "{{ (sandbox_first_executor_line.split('\t'))[1] | default('') }}"
+    sandbox_executor_pull_policy: "{{ (sandbox_first_executor_line.split('\t'))[2] | default('') }}"
+
+- name: Assert live sandbox executors do not force imagePullPolicy Always
+  ansible.builtin.assert:
+    that:
+      - sandbox_executor_always_policy_lines | length == 0
+    fail_msg: >-
+      KWeaver sandbox executor imagePullPolicy is Always on at least one live pod.
+      The simple same-tag overlay would be overwritten by a registry pull; stop and use
+      the database/image-tag update path instead.
+  when:
+    - sandbox.require_non_always_pull_policy | default(true) | bool
+    - sandbox_executor_lines | length > 0
+
+- name: Discover MariaDB pod in KWeaver resource namespace
+  ansible.builtin.shell: |
+    set -euo pipefail
+    kubectl get pods -n {{ kweaver.resource_namespace | quote }} \
+      -l app.kubernetes.io/instance=mariadb \
+      -o jsonpath='{.items[0].metadata.name}'
+  args:
+    executable: /bin/bash
+  register: sandbox_mariadb_pod
+  changed_when: false
+  failed_when: false
+
+- name: Check KWeaver config file for sandbox metadata database credentials
+  ansible.builtin.stat:
+    path: "{{ kweaver.config_path }}"
+  register: sandbox_kweaver_config_stat
+
+- name: Read KWeaver config for sandbox metadata database credentials
+  ansible.builtin.slurp:
+    src: "{{ kweaver.config_path }}"
+  register: sandbox_kweaver_config_raw
+  when:
+    - sandbox_kweaver_config_stat.stat.exists | bool
+    - sandbox_mariadb_pod.rc == 0
+    - sandbox_mariadb_pod.stdout | trim | length > 0
+
+- name: Resolve sandbox metadata database credentials
+  ansible.builtin.set_fact:
+    sandbox_kweaver_config: "{{ sandbox_kweaver_config_raw.content | b64decode | from_yaml }}"
+    sandbox_db_user: "{{ ((sandbox_kweaver_config_raw.content | b64decode | from_yaml).rds | default({})).user | default('') }}"
+    sandbox_db_pass: "{{ ((sandbox_kweaver_config_raw.content | b64decode | from_yaml).rds | default({})).password | default('') }}"
+    sandbox_db_name: "{{ ((sandbox_kweaver_config_raw.content | b64decode | from_yaml).rds | default({})).database | default(sandbox.metadata_database, true) }}"
+  when: sandbox_kweaver_config_raw is defined and sandbox_kweaver_config_raw.content is defined
+
+- name: Query current sandbox base image from KWeaver metadata database
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - exec
+      - -n
+      - "{{ kweaver.resource_namespace }}"
+      - "{{ sandbox_mariadb_pod.stdout | trim }}"
+      - --
+      - mariadb
+      - "-u{{ sandbox_db_user }}"
+      - "-p{{ sandbox_db_pass }}"
+      - -D
+      - "{{ sandbox_db_name }}"
+      - -N
+      - -e
+      - "SELECT f_image_url FROM t_sandbox_template WHERE f_id='{{ sandbox.template_id }}' LIMIT 1;"
+  register: sandbox_image_query
+  changed_when: false
+  failed_when: false
+  when:
+    - sandbox_mariadb_pod.rc == 0
+    - sandbox_mariadb_pod.stdout | trim | length > 0
+    - sandbox_db_user | default('') | length > 0
+    - sandbox_db_pass | default('') | length > 0
+
+- name: Resolve sandbox image without changing KWeaver metadata
+  ansible.builtin.set_fact:
+    sandbox_image_resolved: >-
+      {{
+        (sandbox.base_image | default('') | trim)
+        if (sandbox.base_image | default('') | trim | length > 0)
+        else (
+          (sandbox_image_query.stdout | default('') | trim)
+          if (sandbox_image_query is defined and (sandbox_image_query.stdout | default('') | trim | length > 0))
+          else (sandbox_executor_image | default('') | trim)
+        )
+      }}
+
+- name: Assert sandbox image was resolved
+  ansible.builtin.assert:
+    that:
+      - sandbox_image_resolved | default('') | length > 0
+    fail_msg: >-
+      Unable to resolve the KWeaver sandbox base image. Set sandbox_base_image in
+      secrets.yml, or make sure the python-basic template exists in KWeaver metadata.
+
+- name: Copy foundation-cli to remote sandbox build directory
+  ansible.builtin.copy:
+    src: "{{ package_root }}/bin/foundation-cli"
+    dest: "{{ remote_sandbox_build_dir }}/foundation-cli"
+    mode: "0755"
+
+- name: Render sandbox overlay Dockerfile
+  ansible.builtin.copy:
+    dest: "{{ remote_sandbox_build_dir }}/Dockerfile"
+    mode: "0644"
+    content: |
+      FROM {{ sandbox_image_resolved }}
+      COPY --chmod=0755 foundation-cli /usr/local/bin/foundation-cli
+
+- name: Print sandbox overlay summary
+  ansible.builtin.debug:
+    msg:
+      - "Sandbox overlay mode: {{ (sandbox_overlay_dry_run | default(false) | bool) | ternary('dry-run', 'apply') }}"
+      - "Resolved sandbox image: {{ sandbox_image_resolved }}"
+      - "Live sandbox executor pods detected: {{ sandbox_executor_lines | length }}"
+      - "First live imagePullPolicy: {{ sandbox_executor_pull_policy | default('unknown', true) }}"
+      - "No KWeaver database update will be executed; this role rebuilds the same image:tag."
+
+- name: Detect cluster image import command for sandbox overlay
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if command -v k3s >/dev/null 2>&1; then
+      echo "k3s ctr images import"
+    elif command -v ctr >/dev/null 2>&1; then
+      echo "ctr -n k8s.io images import"
+    else
+      exit 1
+    fi
+  args:
+    executable: /bin/bash
+  register: sandbox_image_import_command_detect
+  changed_when: false
+  when:
+    - image_import_command is not defined
+    - not (sandbox_overlay_dry_run | default(false) | bool)
+
+- name: Set cluster image import command for sandbox overlay
+  ansible.builtin.set_fact:
+    image_import_command: "{{ sandbox_image_import_command_detect.stdout }}"
+  when:
+    - image_import_command is not defined
+    - not (sandbox_overlay_dry_run | default(false) | bool)
+
+- name: Build overlay sandbox image with same tag
+  ansible.builtin.command:
+    argv:
+      - docker
+      - build
+      - --tag
+      - "{{ sandbox_image_resolved }}"
+      - .
+  args:
+    chdir: "{{ remote_sandbox_build_dir }}"
+  when: not (sandbox_overlay_dry_run | default(false) | bool)
+
+- name: Export overlay sandbox image
+  ansible.builtin.command:
+    argv:
+      - docker
+      - save
+      - --output
+      - "{{ artifacts_root }}/sandbox-image.tar"
+      - "{{ sandbox_image_resolved }}"
+  when: not (sandbox_overlay_dry_run | default(false) | bool)
+
+- name: Import overlay sandbox image into cluster runtime
+  ansible.builtin.shell: |
+    set -euo pipefail
+    {{ image_import_command }} "{{ artifacts_root }}/sandbox-image.tar"
+  args:
+    executable: /bin/bash
+  when: not (sandbox_overlay_dry_run | default(false) | bool)
+
+- name: Write sandbox overlay artifact record
+  ansible.builtin.copy:
+    dest: "{{ artifacts_root }}/sandbox-overlay-summary.txt"
+    mode: "0644"
+    content: |
+      mode={{ (sandbox_overlay_dry_run | default(false) | bool) | ternary('dry-run', 'apply') }}
+      image={{ sandbox_image_resolved }}
+      template_id={{ sandbox.template_id }}
+      restart_namespace={{ sandbox.restart_namespace }}
+      restart_selector={{ sandbox.restart_selector }}
+      live_executor_pods={{ sandbox_executor_lines | length }}
+      first_live_image_pull_policy={{ sandbox_executor_pull_policy | default('unknown', true) }}
+      database_update=false
+
+- name: Restart sandbox pods to pick up overlay image
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - delete
+      - pods
+      - -n
+      - "{{ sandbox.restart_namespace }}"
+      - -l
+      - "{{ sandbox.restart_selector }}"
+      - --ignore-not-found=true
+  changed_when: true
+  when:
+    - not (sandbox_overlay_dry_run | default(false) | bool)
+    - sandbox_overlay_restart_pods | default(true) | bool
+    - sandbox_executor_lines | length > 0

@@ -1,0 +1,6 @@
+patternId,name,appType,faultCategory,affectedGranularity,symptomKeywords,intentKeywords,requiredClarification,disposalHint,severityBaseline,enabled
+mysql_service_unavailable,业务系统不可用,MySQL,service_outage,instance_or_database,"无法连接,服务停止,宕机,访问失败,连接异常,业务不可用","恢复业务,修复数据库服务,恢复系统可用性","需明确提供业务的是实例还是数据库；需明确是全部业务不可用还是部分业务不可用；需明确故障发生时间。","先明确受影响粒度；若实例整体不可用，优先考虑实例级恢复；若仅部分数据库受影响，优先考虑库级恢复。",high,true
+mysql_data_loss,数据丢失,MySQL,data_loss,instance_or_database_or_table_or_log,"误删除,DROP,TRUNCATE,数据不见了,数据缺失,记录丢失","恢复数据,找回误删数据,恢复丢失数据","需明确数据丢失时间；需明确影响范围；需明确是实例、库、表还是日志时间段；需明确是否要求恢复到指定时间点。","优先选择故障前最近可用时间点；根据确认后的范围决定实例级、库级、表级间接或日志级恢复。",high,true
+mysql_data_corruption,数据损坏导致对象访问异常,MySQL,data_corruption,instance_or_database_or_table,"数据页损坏,索引损坏,表无法访问,查询报错,表损坏,逻辑损坏,物理损坏","修复数据损坏,恢复损坏对象,恢复异常读写,修复表损坏","需明确故障时间；需明确影响范围；需明确是单表、多个表、库还是实例受损；需明确当前是否还能部分读写。","优先评估受损对象范围；表级问题优先采用间接恢复；范围扩大时再考虑库级或实例级恢复。",high,true
+mysql_ransomware,勒索或数据被加密,MySQL,ransomware,instance_or_database_or_table,"被加密,勒索,文件被加密,数据被锁定,异常加密","恢复被加密数据,隔离恢复,恢复业务可用","需明确影响范围；需明确受影响时间范围；需明确是否要求恢复回原环境；需明确隔离环境要求。","优先在隔离环境恢复；避免原环境二次污染；默认不建议直接恢复回原环境。",critical,true
+mysql_configuration_error,配置错误或配置异常,MySQL,configuration_error,instance_or_database,"配置文件损坏,参数错误,无法启动,配置异常,启动失败","修复配置,恢复启动,恢复服务可用","需明确是纯配置问题、实例问题，还是已涉及数据库对象损坏；需明确是否还能连接实例。","若未涉及数据损坏，默认不进入恢复流程；优先进行配置修正与启动验证。",medium,true

@@ -1,0 +1,53 @@
+---
+type: action_type
+action_type: add
+id: query_storage_pools
+name: 查询存储池列表
+tags: [存储池, 查询, Foundation]
+enabled: true
+risk_level: low
+requires_approval: false
+---
+
+## ActionType: 查询存储池列表
+
+查询指定存储服务下的所有存储池。需要提供存储服务ID作为参数。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| storage_pool |
+
+### Pre-conditions
+
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| storage_service | exist | true | 存储服务必须存在 |
+| storage_service | property:storageServiceId | valid | storageServiceId 必须是有效的存储服务ID |
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| storage_pool | 仅查询操作，不影响数据 |
+| storage_service | 仅查询操作，不影响数据 |
+
+### Tool Configuration
+
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | foundation_toolbox | query_storage_pools |
+
+### Parameter Binding
+
+| Name | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| storageServiceId | string | input | - | 存储服务ID（必填） |
+
+### Execution Description
+
+1. 接收参数
+2. 验证参数 - 检查 storageServiceId 是否存在、是否有效
+3. 调用 Foundation 工具
+4. 返回结果 - 返回存储池列表，包含：storagePoolId, storagePoolName, storageServiceId

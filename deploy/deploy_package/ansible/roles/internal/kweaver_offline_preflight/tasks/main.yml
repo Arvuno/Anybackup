@@ -1,0 +1,109 @@
+---
+- name: Check bundled proton-cli binary
+  ansible.builtin.stat:
+    path: "{{ proton_cli.binary_path }}"
+  delegate_to: localhost
+  become: false
+  register: proton_cli_bundle
+
+- name: Check bundled Proton offline package
+  ansible.builtin.stat:
+    path: "{{ proton_offline.package_path }}"
+  delegate_to: localhost
+  become: false
+  register: proton_offline_bundle
+
+- name: Check bundled KWeaver Core offline package
+  ansible.builtin.stat:
+    path: "{{ kweaver_offline.package_path }}"
+  delegate_to: localhost
+  become: false
+  register: kweaver_offline_bundle
+
+- name: Check bundled KWeaver Core manifest copy
+  ansible.builtin.stat:
+    path: "{{ kweaver_offline.core_manifest_path }}"
+  delegate_to: localhost
+  become: false
+  register: kweaver_core_manifest_bundle
+
+- name: Check bundled ISF manifest copy
+  ansible.builtin.stat:
+    path: "{{ kweaver_offline.isf_manifest_path }}"
+  delegate_to: localhost
+  become: false
+  register: kweaver_isf_manifest_bundle
+
+- name: Check bundled KWeaver deploy automation directory
+  ansible.builtin.stat:
+    path: "{{ kweaver_offline.deploy_bundle_dir }}"
+  delegate_to: localhost
+  become: false
+  register: kweaver_deploy_bundle
+
+- name: Assert offline deployment bundle is complete
+  ansible.builtin.assert:
+    that:
+      - proton_cli_bundle.stat.exists
+      - proton_offline_bundle.stat.exists
+      - kweaver_offline_bundle.stat.exists
+      - kweaver_core_manifest_bundle.stat.exists
+      - kweaver_isf_manifest_bundle.stat.exists
+      - kweaver_deploy_bundle.stat.exists
+      - kweaver_deploy_bundle.stat.isdir
+    fail_msg: >-
+      Offline deployment assets are incomplete under {{ package_root }}.
+      Expected proton-cli, Proton offline package, KWeaver Core offline package,
+      versioned manifest copies, and the vendored KWeaver deploy bundle.
+
+- name: Discover packaged image tar archives for offline imports
+  ansible.builtin.find:
+    paths:
+      - "{{ package_root }}/images"
+      - "{{ package_root }}/images/kweaver-core"
+    patterns: "*.tar"
+    recurse: false
+    file_type: file
+  delegate_to: localhost
+  become: false
+  register: kweaver_packaged_images
+
+- name: Warn when packaged image archives are absent
+  ansible.builtin.debug:
+    msg:
+      - "No image tar archives were found under {{ package_root }}/images."
+      - "This workspace can still validate the KWeaver Core offline package path, but a fully offline field package should include the required runtime image tar files."
+  when: (kweaver_packaged_images.files | default([]) | length) == 0
+
+- name: Check Kubernetes node readiness and disk pressure
+  ansible.builtin.shell: |
+    set -euo pipefail
+    kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"|"}{range .status.conditions[*]}{.type}={.status}{","}{end}{"\n"}{end}' \
+      | awk -F'|' '
+          BEGIN {healthy=1; count=0}
+          NF >= 2 {
+            count++
+            if ($2 !~ /Ready=True/) healthy=0
+            if ($2 ~ /DiskPressure=True/) healthy=0
+          }
+          END {
+            if (count == 0 || healthy == 0) exit 1
+          }
+        '
+  changed_when: false
+
+- name: Check root filesystem free space in GiB
+  ansible.builtin.shell: |
+    set -euo pipefail
+    df -BG / | awk 'NR==2 {gsub(/G/, "", $4); print $4}'
+  register: kweaver_root_free_gib
+  changed_when: false
+
+- name: Warn when root filesystem free space is low
+  ansible.builtin.debug:
+    msg:
+      - "Detected only {{ kweaver_root_free_gib.stdout | trim }}GiB free on /."
+      - "The offline package extraction/import flow is large; keep at least 20GiB free to avoid DiskPressure during install."
+  when:
+    - (kweaver_root_free_gib.stdout | trim | length) > 0
+    - (kweaver_root_free_gib.stdout | int) < 20

@@ -1,0 +1,35 @@
+---
+type: object_type
+id: data_rule
+name: 数据规则
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 数据规则
+
+描述业务数据类型、数据分级属性和典型内容之间的映射关系，用于将外部输入的数据类型归入合适的保护层级，并作为数据侧规则对象关联到备份方案。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | data_rule | data_rule |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| data_type | 数据类型 | string | 业务数据类型。 | data_type |
+| data_level | 数据分级属性 | string | 对应的数据分级属性，可为组合值。 | data_level |
+| data_content | 典型内容 | text | 该数据类型包含的典型数据内容。 | data_content |
+| rule_scope | 规则范围 | string | 数据规则适用范围，例如普通数据保护、敏感数据增强保护。 | rule_scope |
+| description | 说明 | text | 数据规则说明。 | description |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: data_type
+Display Key: data_type
+Incremental Key:

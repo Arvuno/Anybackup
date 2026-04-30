@@ -1,0 +1,50 @@
+replicaCount: 2
+
+image:
+  repository: registry.example.com/anybackup/web-service
+  pullPolicy: IfNotPresent
+  tag: latest
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+podLabels: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  nodePort: null
+
+ingressRoute:
+  enabled: true
+  ingressClass: traefik
+  pathPrefix: /
+  priority: 1
+  middlewares: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+probes:
+  path: /healthz
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  liveness:
+    initialDelaySeconds: 15
+    periodSeconds: 20
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,54 @@
+---
+type: object_type
+id: mysql_backup_config
+name: 备份应用配置(mysql)
+tags: []
+---
+
+## ObjectType: 备份应用配置(mysql)
+
+用于描述 MySQL 和 MariaDB 类型保护对象的专用备份配置；当前使用数据源路径作为主要展示字段。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | mysql_backup_config | mysql_backup_config |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| custom_param | 自定义参数 | string | 自定义参数 | custom_param |
+| delete_arch_period | 日志删除策略数值 | integer | 日志删除策略数值 | delete_arch_period |
+| is_merge_backup | 是否开启合成备份 | binary | 是否开启合成备份 | is_merge_backup |
+| backup_type | 备份类型 | integer | 1 表示 xtrabackup，2 表示 LVM 快照 | backup_type |
+| real_path | MySQL数据源路径 | string | MySQL 保护对象的数据源路径 | real_path |
+| object_id | 保护对象ID | string | 对应保护对象ID | object_id |
+| has_custom_param | 是否开启自定义参数配置 | binary | 是否开启自定义参数配置 | has_custom_param |
+| node_sequence | 节点备份顺序 | string | 节点备份顺序 | node_sequence |
+| is_arch_delete | 是否开启日志删除策略 | binary | 是否开启日志删除策略 | is_arch_delete |
+| system_id | 所属生产系统ID | string | 所属生产系统ID | system_id |
+| is_backup_mode | 是否设置备份模式 | binary | 是否设置备份模式 | is_backup_mode |
+| delete_arch_unit | 日志删除策略单位 | integer | 日志删除策略单位 | delete_arch_unit |
+| use_page_track | 是否使用页面追踪 | binary | 是否开启页面追踪能力，用于增量备份场景减少全盘扫描 | use_page_track |
+| is_notauto_tofull | 是否自动转全量 | binary | 是否关闭自动转全量策略 | is_notauto_tofull |
+| data_channel_num | 数据多通道 | integer | 数据多通道 | data_channel_num |
+| backup_mode | 集群备份模式 | integer | 集群备份模式 | backup_mode |
+| is_rate_control | 是否开启流量控制 | binary | 是否开启流量控制 | is_rate_control |
+| is_node_sequence | 是否节点顺序备份 | binary | 是否节点顺序备份 | is_node_sequence |
+| is_backup_compress | 是否压缩备份 | binary | 是否压缩备份 | is_backup_compress |
+| clean_page_track | 是否开启页面追踪 | binary | 是否开启页面追踪，解决大数据量备份性能问题；在增量备份场景可减少全盘扫描，但会增加生产环境缓存压力 | clean_page_track |
+| rate_size | 流量控制数值 | integer | 流量控制数值 | rate_size |
+| backup_gran | 备份粒度 | integer | 备份粒度：1 表示实例级，2 表示库级 | backup_gran |
+| is_multi_channel | 是否多通道备份 | binary | 是否多通道备份 | is_multi_channel |
+| is_real_time_log | 是否开启实时日志备份 | binary | 是否开启实时日志备份 | is_real_time_log |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: object_id
+Display Key: real_path
+Incremental Key:

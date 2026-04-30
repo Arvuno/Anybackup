@@ -1,0 +1,4 @@
+interface:
+  display_name: "KWeaver Core Integrator"
+  short_description: "Integrate trimmed KWeaver Core into V9."
+  default_prompt: "Use this skill to deploy KWeaver Core as a black-box dependency inside the V9 release flow."

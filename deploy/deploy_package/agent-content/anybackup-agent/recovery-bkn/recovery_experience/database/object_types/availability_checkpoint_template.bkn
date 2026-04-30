@@ -1,0 +1,40 @@
+---
+type: object_type
+id: availability_checkpoint_template
+name: 可恢复性验证模板
+tags: [Database, 恢复, 经验知识, 验证模板]
+---
+
+## ObjectType: 可恢复性验证模板
+
+可恢复性验证模板对象定义恢复完成后的验证知识主数据，用于表达恢复后应执行的检查项、验证方式和成功标准。当前阶段它主要承载与 `run` 层实际工具能力一致的通用基础验证模板。它回答的是“如何确保恢复不是假恢复”。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| checkpointTemplateId | 模板ID | string | 验证模板唯一标识。 | checkpointTemplateId |
+| name | 模板名称 | string | 验证模板名称。 | name |
+| appType | 应用类型 | string | 数据库应用类型，如 MySQL、Oracle、PostgreSQL、SQLServer。 | appType |
+| checkpointType | 检查类型 | string | 检查类型，如 sql_query、connectivity、data_integrity、business_query。 | checkpointType |
+| targetScope | 目标范围 | string | 验证目标范围，如 instance、database、log_file。 | targetScope |
+| verificationMethod | 验证方式 | text | 验证执行方式说明。 | verificationMethod |
+| successCriteria | 成功标准 | text | 验证通过标准。 | successCriteria |
+| faultPatternId | 故障模式ID | string | 可选，保留给后续故障专项验证模板扩展；当前阶段初始化数据通常为空。 | faultPatternId |
+| strategyTemplateId | 策略模板ID | string | 可选，关联的恢复策略模板标识；后续按恢复策略细化验证模板时使用。 | strategyTemplateId |
+| enabled | 是否启用 | boolean | 是否参与验证模板检索。 | enabled |
+
+### Keys
+
+Primary Keys: checkpointTemplateId
+Display Key: name
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | ExperienceBKNDB.public.availability_checkpoint_template | ExperienceBKNDB.public.availability_checkpoint_template |

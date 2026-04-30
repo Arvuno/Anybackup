@@ -1,0 +1,104 @@
+replicaCount: 1
+
+image:
+  repository: core-agent-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+
+service:
+  # 当前服务通过 RabbitMQ 与外部系统交互，默认不对外暴露 Service。
+  enabled: false
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  # 当前服务不是 HTTP 入口，默认不创建 Ingress。
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: core-agent-service.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+config:
+  rabbitmqExchange: "conversation.message.events"
+  rabbitmqExchangeType: topic
+  rabbitmqQueue: "core_agent.message.events"
+  # 单 Pod 内 RabbitMQ consumer worker 数；每个 worker 独占 MQ 连接、数据库会话和 KWeaver client。
+  rabbitmqConsumerCount: 2
+  # 状态回写必须发布到会话服务绑定的 topic exchange。
+  rabbitmqStatusExchange: "core_agent.run_status.events"
+  # 为空表示不覆盖状态 routing key，由服务按 accepted/completed/failed 三类事件键发布。
+  rabbitmqStatusRoutingKey: ""
+  kweaverBaseUrl: ""
+  kweaverDecisionAgentId: "01KQ187V2TFPYMZACY8VZTMQ4Y"
+  kweaverBusinessDomain: ""
+  kweaverTimeout: 30
+  # 为空表示不限制 Decision Agent 单次 chat/completion 等待时间；如需限制可填写秒数。
+  kweaverChatTimeout: ""
+  # DEBUG 日志只按间隔记录流式进度，不输出完整 chunk。
+  kweaverStreamProgressInterval: 100
+  # 调试阶段默认写完整流式 trace；生产环境建议覆盖为 false。
+  kweaverStreamTraceEnabled: true
+  # trace 开启时，该路径同时作为容器内挂载目录和节点 hostPath 目录。
+  kweaverStreamTraceDir: "/tmp/core-agent-service-trace-log"
+  kweaverTlsInsecure: true
+  # 部署环境中 KWeaver OAuth 注册接口偶发 500 时，启动探针会导致 worker CrashLoop；默认关闭，真实消息处理时再暴露调用失败。
+  kweaverProbeOnStartup: false
+  # Anybackup Foundation CLI 连接地址，会随业务 Agent 请求写入 custom_querys.foundation.endpoint。
+  foundationEndpoint: ""
+  coreAgentLogLevel: DEBUG
+  coreAgentLogToStdout: true
+  # 为空时表示禁用文件日志，仅按 coreAgentLogToStdout 输出。
+  coreAgentLogFile: ""
+
+secrets:
+  create: false
+  name: core-agent-service-secrets
+  databaseUrlKey: database-url
+  rabbitmqUrlKey: rabbitmq-url
+  kweaverUsernameKey: kweaver-username
+  kweaverPasswordKey: kweaver-password
+  kweaverTokenKey: kweaver-token
+  foundationAkKey: foundation-ak
+  foundationSkKey: foundation-sk
+  databaseUrl: ""
+  rabbitmqUrl: ""
+  kweaverUsername: ""
+  kweaverPassword: ""
+  kweaverToken: ""
+  foundationAk: ""
+  foundationSk: ""
+
+envFile:
+  enabled: false
+  # 这是容器内的 .env 文件路径，不是目录路径。
+  mountPath: /app/.env
+  # 仅在 enabled=true 时写入额外 ConfigMap 并挂载为 .env 文件；为空时会得到空文件。
+  content: ""
+
+kweaverHostMount:
+  enabled: false
+  # 这里必须填写 Kubernetes 节点上的实际绝对路径，`~` 不会在 hostPath 中自动展开。
+  hostPath: /root/.kweaver
+  # 仅在没有显式用户名密码、且需要复用节点本地 ConfigAuth 登录态时才需要挂载该目录。
+  mountPath: /root/.kweaver

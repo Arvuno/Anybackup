@@ -1,0 +1,32 @@
+---
+type: object_type
+id: storage_service
+name: 存储服务
+tags: [备份, 存储服务, 恢复]
+---
+
+## ObjectType: 存储服务
+
+存储服务对象，表示备份数据存储的存储服务。存储服务是存储池的上级对象，一个存储服务可以包含多个存储池。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| storageServiceId | 存储服务ID | string | 存储服务唯一标识符（去掉横杠的UUID） | storageServiceId |
+| storageServiceName | 存储服务名称 | string | 存储服务名称 | storageServiceName |
+
+### Keys
+
+Primary Keys: storageServiceId
+Display Key: storageServiceName
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | MultiStorageSvcMgmServiceDB.console_storage_svc | MultiStorageSvcMgmServiceDB.console_storage_svc |

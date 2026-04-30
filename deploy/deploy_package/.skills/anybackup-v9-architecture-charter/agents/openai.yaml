@@ -1,0 +1,4 @@
+interface:
+  display_name: "AnyBackup V9 Charter"
+  short_description: "Align V9 work to the target architecture."
+  default_prompt: "Use $anybackup-v9-architecture-charter to align this design, implementation, or deployment change with the AnyBackup V9 target architecture."

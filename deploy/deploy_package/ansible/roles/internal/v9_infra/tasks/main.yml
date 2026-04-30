@@ -1,0 +1,136 @@
+---
+- name: Copy v9-infra chart to remote host
+  ansible.builtin.copy:
+    src: "{{ deployment_chart_source_root }}/v9-infra/"
+    dest: "{{ remote_chart_root }}/v9-infra/"
+    mode: "0644"
+
+- name: Render v9-infra values file
+  ansible.builtin.template:
+    src: v9-infra-values.yaml.j2
+    dest: "{{ generated_root }}/v9-infra-values.yaml"
+    mode: "0644"
+
+- name: Render PostgreSQL secret manifest
+  ansible.builtin.copy:
+    dest: "{{ generated_root }}/v9-postgres-secret.yaml"
+    mode: "0600"
+    content: |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ v9_infra.postgres.secret_name }}
+        namespace: {{ v9_infra.namespace }}
+      type: Opaque
+      data:
+        POSTGRES_USER: {{ v9_postgres_username | b64encode }}
+        POSTGRES_PASSWORD: {{ v9_postgres_password | b64encode }}
+        POSTGRES_DB: {{ v9_postgres_database | b64encode }}
+
+- name: Render RabbitMQ secret manifest
+  ansible.builtin.copy:
+    dest: "{{ generated_root }}/v9-rabbitmq-secret.yaml"
+    mode: "0600"
+    content: |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ v9_infra.rabbitmq.secret_name }}
+        namespace: {{ v9_infra.namespace }}
+      type: Opaque
+      data:
+        RABBITMQ_ERLANG_COOKIE: {{ v9_rabbitmq_erlang_cookie | b64encode }}
+        RABBITMQ_DEFAULT_USER: {{ v9_rabbitmq_username | b64encode }}
+        RABBITMQ_DEFAULT_PASS: {{ v9_rabbitmq_password | b64encode }}
+
+- name: Render Redis secret manifest
+  ansible.builtin.copy:
+    dest: "{{ generated_root }}/v9-redis-secret.yaml"
+    mode: "0600"
+    content: |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ v9_infra.redis.secret_name }}
+        namespace: {{ v9_infra.namespace }}
+      type: Opaque
+      data:
+        REDIS_PASSWORD: {{ v9_redis_password | b64encode }}
+
+- name: Ensure V9 infra namespace exists
+  ansible.builtin.command: "kubectl get namespace {{ v9_infra.namespace }}"
+  register: v9_infra_ns
+  changed_when: false
+  failed_when: false
+
+- name: Create V9 infra namespace
+  ansible.builtin.command: "kubectl create namespace {{ v9_infra.namespace }}"
+  when: v9_infra_ns.rc != 0
+
+- name: Apply V9 infra secrets
+  ansible.builtin.command: "kubectl apply -f {{ item }}"
+  loop:
+    - "{{ generated_root }}/v9-postgres-secret.yaml"
+    - "{{ generated_root }}/v9-rabbitmq-secret.yaml"
+    - "{{ generated_root }}/v9-redis-secret.yaml"
+  loop_control:
+    label: "{{ item | basename }}"
+
+- name: Deploy v9-infra chart
+  ansible.builtin.command:
+    argv:
+      - helm
+      - upgrade
+      - --install
+      - "{{ v9_infra.release_name }}"
+      - "{{ remote_chart_root }}/v9-infra"
+      - --namespace
+      - "{{ v9_infra.namespace }}"
+      - --create-namespace
+      - --values
+      - "{{ generated_root }}/v9-infra-values.yaml"
+      - --wait
+      - --timeout
+      - "{{ helm_wait_timeout }}"
+
+- name: Remove legacy V9 deployment duplicates
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - delete
+      - deployment
+      - -n
+      - "{{ v9_infra.namespace }}"
+      - v9-postgres
+      - v9-rabbitmq
+      - v9-redis
+      - --ignore-not-found
+
+- name: Normalize V9 service selectors to v9-infra StatefulSets
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - patch
+      - svc
+      - "{{ item.name }}"
+      - -n
+      - "{{ v9_infra.namespace }}"
+      - --type=json
+      - --patch
+      - "{{ item.patch }}"
+  loop:
+    - name: "{{ v9_infra.postgres.service_name }}"
+      patch: >-
+        [{"op":"replace","path":"/spec/selector","value":{"app.kubernetes.io/name":"v9-infra","app.kubernetes.io/component":"postgres"}}]
+    - name: "{{ v9_infra.rabbitmq.service_name }}"
+      patch: >-
+        [{"op":"replace","path":"/spec/selector","value":{"app.kubernetes.io/name":"v9-infra","app.kubernetes.io/component":"rabbitmq"}}]
+    - name: "{{ v9_infra.redis.service_name }}"
+      patch: >-
+        [{"op":"replace","path":"/spec/selector","value":{"app.kubernetes.io/name":"v9-infra","app.kubernetes.io/component":"redis"}}]
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Wait for V9 infra pods to become ready
+  ansible.builtin.command: "kubectl wait --for=condition=Ready pod --all -n {{ v9_infra.namespace }} --timeout={{ verify.timeout }}"
+  changed_when: false

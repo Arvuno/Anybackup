@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: verification_applies_to_app_type
+name: 可用性验证按应用类型适配
+tags: [MySQL, 恢复, 验证, 对象]
+---
+
+## RelationType: 可用性验证按应用类型适配
+
+可用性验证对象通过 appType 字段按应用类型适配数据保护对象，根据数据保护对象的应用类型确定需要采用的可用性验证方法和工具。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| availability_verification | protection_object | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| appType | appType |

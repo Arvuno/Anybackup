@@ -1,0 +1,15 @@
+---
+type: knowledge_network
+id: mysql_recovery_experience
+name: MySQL数据库恢复经验知识网络
+tags: [Database, 恢复, 经验知识, 主数据]
+business_domain: mysql_recovery
+---
+
+# MySQL数据库恢复经验知识网络
+该网络用于定义数据库恢复领域的经验知识主数据 schema。本期范围仍以 MySQL 为中心，策略模板默认按 `vendor = AISHU` 初始化，并为未来多备份软件扩展预留字段。对象数据存放在关系型数据库中，并通过 dataview 暴露给 Agent 检索。网络本身不保存某次会话中的临时推理结果，而是保存可长期复用的故障模式、恢复能力、策略模板、风险规则和验证模板。Agent 必须先根据 `fault_pattern.requiredClarification` 补齐关键信息，再进入能力认知和正式策略选择；若未命中正式模板而临时推理出候选策略，则该策略默认视为高风险并要求人工确认。当前验证模板按恢复策略组织，并通过 `strategyTemplateId` 与策略模板建立 direct relation。
+
+## Network Overview
+
+- **ObjectTypes** (object_types/): fault_pattern, recovery_capability, recovery_strategy_template, risk_rule, availability_checkpoint_template
+- **RelationTypes** (relation_types/): fault_pattern_supported_by_recovery_cap, fault_pattern_resolved_by_strategy_tpl, recovery_cap_constrains_strategy_tpl, strategy_tpl_constrained_by_risk_rule, strategy_tpl_verified_by_checkpoint_tpl

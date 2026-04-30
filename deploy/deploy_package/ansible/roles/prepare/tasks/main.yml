@@ -1,0 +1,4 @@
+---
+- name: Run package preflight checks
+  ansible.builtin.include_role:
+    name: internal/preflight

@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: backup_config_to_region_cfg
+name: 备份配置依赖区域配置
+tags: []
+---
+
+## RelationType: 备份配置依赖区域配置
+
+描述备份配置与区域配置之间的依赖关系；当 `backup_config.config_version = 1` 时，备份配置会依赖对应的区域配置，关联键来源于 `backup_region_config.config_id`。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| backup_config | backup_region_config | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| id | config_id |

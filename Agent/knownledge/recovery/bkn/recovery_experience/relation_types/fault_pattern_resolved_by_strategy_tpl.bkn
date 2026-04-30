@@ -1,0 +1,24 @@
+---
+type: relation_type
+id: fault_pattern_resolved_by_strategy_tpl
+name: 故障模式由策略模板解决
+tags: [Database, 恢复, 经验知识, 策略]
+---
+
+## RelationType: 故障模式由策略模板解决
+
+故障模式通过 `faultPatternId` 与恢复策略模板关联，用于表达某类故障默认适配哪些恢复方案。
+
+当前该关系只表达默认主模板映射，不保证穷尽所有可复用模板。当多个故障模式复用同一策略模板时，可能只有其中一个故障模式通过 `faultPatternId` 建立直接关联。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| fault_pattern | recovery_strategy_template | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| patternId | faultPatternId |

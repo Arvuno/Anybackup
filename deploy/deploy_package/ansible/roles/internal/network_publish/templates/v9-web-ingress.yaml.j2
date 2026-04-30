@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: v9-web
+  namespace: {{ deployment_namespace }}
+  labels:
+    app.kubernetes.io/name: v9-web
+    app.kubernetes.io/part-of: v9
+spec:
+  ingressClassName: {{ effective_ingress_class | quote }}
+  rules:
+    - http:
+        paths:
+          - path: {{ network_public_web_contract.public_path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ network_public_web_contract.resource_name }}
+                port:
+                  number: {{ network_public_web_contract.service_port | int }}

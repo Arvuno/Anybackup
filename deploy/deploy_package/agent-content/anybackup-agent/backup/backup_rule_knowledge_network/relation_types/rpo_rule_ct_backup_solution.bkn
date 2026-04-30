@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: rpo_rule_ct_backup_solution
+name: RPO规则约束方案
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: RPO规则约束方案
+
+通过 `rpo_rule.id` 匹配 `backup_solution.source_rpo_rule_id`，表示满足某条 RPO 规则要求的备份方案集合。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| rpo_rule | backup_solution | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| id | source_rpo_rule_id |

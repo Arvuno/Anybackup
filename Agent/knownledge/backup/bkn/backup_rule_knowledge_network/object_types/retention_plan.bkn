@@ -1,0 +1,51 @@
+---
+type: object_type
+id: retention_plan
+name: 数据保留计划
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 数据保留计划
+
+定义备份方案中的唯一副本保留计划对象。该对象使用与规格定义一致的三类参数分组：数据保留设置、特定周期保留、日志保留设置。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 6f4d15ce-84f4-4b95-819f-cb777d257919 | retention_plan |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 保留计划ID | string | 数据保留计划唯一标识。 | id |
+| backup_solution_id | 备份方案ID | string | 当前保留计划所属的备份方案。 | backup_solution_id |
+| name | 保留计划名称 | string | 数据保留计划名称。 | name |
+| data_level | 数据分级属性 | string | 适用的数据分级属性。 | data_level |
+| storage_media | 存储介质 | string | 存储介质，例如本地、同城、异地。 | storage_media |
+| data_retention_enabled | 数据保留设置 | binary | 是否启用数据保留设置。 | data_retention_enabled |
+| data_retention_mode | 数据保留模式 | string | 数据保留模式，例如 按时长保留、按数量保留、按特定周期保留。 | data_retention_mode |
+| retention_days | 保留天数 | integer | 按最小合规要求折算的保留天数。 | retention_days |
+| data_retention_duration_value | 数据保留时长数值 | integer | 数据按时长保留时的数值部分。 | data_retention_duration_value |
+| data_retention_duration_unit | 数据保留时长单位 | string | 数据按时长保留时的单位，例如 年、月、周、天。 | data_retention_duration_unit |
+| data_retention_count | 数据保留数量 | integer | 数据按数量保留时的副本数量。 | data_retention_count |
+| periodic_retention_enabled | 启用周期保留 | binary | 是否启用按特定周期保留。 | periodic_retention_enabled |
+| daily_copy_count | 天副本保留数量 | integer | 天副本保留数量。 | daily_copy_count |
+| weekly_copy_count | 周副本保留数量 | integer | 周副本保留数量。 | weekly_copy_count |
+| monthly_copy_count | 月副本保留数量 | integer | 月副本保留数量。 | monthly_copy_count |
+| quarterly_copy_count | 季度副本保留数量 | integer | 季度副本保留数量。 | quarterly_copy_count |
+| yearly_copy_count | 年副本保留数量 | integer | 年副本保留数量。 | yearly_copy_count |
+| log_retention_enabled | 日志保留设置 | binary | 是否启用日志保留设置。 | log_retention_enabled |
+| log_retention_duration_value | 日志保留时长数值 | integer | 日志按时长保留时的数值部分。 | log_retention_duration_value |
+| log_retention_duration_unit | 日志保留时长单位 | string | 日志按时长保留时的单位，例如 年、月、周、天。 | log_retention_duration_unit |
+| description | 说明 | text | 数据保留计划说明。 | description |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

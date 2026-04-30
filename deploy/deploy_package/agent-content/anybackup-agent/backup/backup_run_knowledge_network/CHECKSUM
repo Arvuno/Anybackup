@@ -1,0 +1,31 @@
+# BKN Directory Checksum
+# generated: 2026-04-26T01:33:08Z
+SKILL.md  sha256:2a4682119b1a5205
+action_type:query_prod_resource_backup_cfg  sha256:8663886a0101e341
+action_type:query_protected_object_backup_config  sha256:aa3280fbc47fad52
+action_type:query_storage_pool  sha256:3b4eb8f6ded245ee
+action_type:query_storage_service  sha256:cdbfcd61c967dd8c
+object_type:backup_client_config  sha256:1ca2fbb621a046ed
+object_type:backup_config  sha256:79af0e43110185f7
+object_type:backup_region_config  sha256:81817adea111abfc
+object_type:backup_storage_pool_config  sha256:20e49d6f153c6ace
+object_type:client  sha256:2ae190691ae1e6b6
+object_type:mysql_backup_config  sha256:e7db65b1f95afb18
+object_type:production_resource  sha256:8f482132a686f0bd
+object_type:production_system  sha256:e678035b7708e5ad
+object_type:protected_object  sha256:8bd4eee2cbf9415b
+object_type:storage_pool  sha256:a142116ea5f02395
+object_type:storage_service  sha256:cb61f16840aef0d4
+relation_type:backup_config_to_client  sha256:2fcc9ab5e3454e9d
+relation_type:backup_config_to_region_cfg  sha256:d430cb8e65100ef9
+relation_type:backup_config_to_storage_pool  sha256:6bfc2ce990d6e38e
+relation_type:backup_config_to_storage_service  sha256:18250f82a912291f
+relation_type:backup_region_to_client_cfg  sha256:bc7ac571d6cc46b1
+relation_type:backup_region_to_pool_cfg  sha256:330b7d4ed4e3960b
+relation_type:prod_resource_gen_protected_object  sha256:ab9eec5bad180b1a
+relation_type:prod_system_has_prod_resource  sha256:c71825f1fd66d06a
+relation_type:prod_system_to_parent_system  sha256:ca7e321bae0aace3
+relation_type:protected_object_gen_mysql_config  sha256:8f301192cc87093e
+relation_type:protected_object_has_backup_config  sha256:4931200a6b7e9b6a
+relation_type:protected_object_to_prod_system  sha256:dbb6b0243ccdd68b
+relation_type:storage_pool_to_storage_service  sha256:001c5e1f015fe48a

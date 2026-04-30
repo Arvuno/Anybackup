@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: task_specifies_timepoint
+name: 恢复任务明确时间点副本
+tags: [MySQL, 恢复, 任务, 时间点]
+---
+
+## RelationType: 恢复任务明确时间点副本
+
+恢复任务对象通过 timePointId 字段关联到时间点副本对象，明确恢复任务使用哪个时间点副本进行恢复。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| recovery_task | timepoint_copy | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| timePointId | timePointId |

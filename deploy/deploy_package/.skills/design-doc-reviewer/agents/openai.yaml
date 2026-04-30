@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Design Doc Reviewer"
+  short_description: "Review design docs for structure and consistency."
+  default_prompt: "Use $design-doc-reviewer to review the updated design docs under docs/00_设计文档 before finalizing them."

@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: backup_solution_use_backup_plan
+name: 方案使用备份计划
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: 方案使用备份计划
+
+通过 `backup_solution.id` 匹配 `backup_plan.backup_solution_id`，将备份方案关联到其下属的多个备份计划条目。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| backup_solution | backup_plan | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| id | backup_solution_id |

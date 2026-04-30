@@ -1,0 +1,10 @@
+---
+type: concept_group
+id: backup_solution_recommendation
+name: 备份方案推荐
+tags: [备份方案, 备份方案推荐]
+---
+
+## ConceptGroup: 备份方案推荐
+
+围绕规则约束匹配、备份方案选择、窗口约束、计划组合、数据保留计划以及配置规则项汇总建立的备份知识分组。

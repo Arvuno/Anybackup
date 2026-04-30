@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: pool_belongs_service
+name: 存储池属于存储服务
+tags: [MySQL, 备份, 存储池, 存储服务]
+---
+
+## RelationType: 存储池属于存储服务
+
+存储池对象通过 storageServiceId 字段关联到存储服务对象，表示该存储池属于哪个存储服务。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| storage_pool | storage_service | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| storageServiceId | storageServiceId |

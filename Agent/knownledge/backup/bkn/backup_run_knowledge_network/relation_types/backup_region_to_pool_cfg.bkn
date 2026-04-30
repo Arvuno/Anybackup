@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: backup_region_to_pool_cfg
+name: 备份区域配置包含存储池配置
+tags: []
+---
+
+## RelationType: 备份区域配置包含存储池配置
+
+描述区域级备份配置与存储池配置之间的从属关系，来源于 `backup_storage_pool_config.region_id`；用于表达多区域场景下某一区域下配置了哪些备份存储池。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| backup_region_config | backup_storage_pool_config | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| id | region_id |

@@ -1,0 +1,202 @@
+---
+- name: Ensure KWeaver online source and config directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ kweaver_online.repo_dir | dirname }}"
+    - "{{ kweaver.config_dir }}"
+
+- name: Build KWeaver Core source ref candidates
+  ansible.builtin.set_fact:
+    kweaver_online_ref_candidates:
+      - "{{ kweaver_online.git_ref }}"
+      - "release/{{ kweaver_online.version }}"
+      - "v{{ kweaver_online.version }}"
+      - "{{ kweaver_online.version }}"
+
+- name: Check whether KWeaver source is already cloned
+  ansible.builtin.stat:
+    path: "{{ kweaver_online.repo_dir }}/.git"
+  register: kweaver_online_repo_git_dir
+
+- name: Check KWeaver source directory
+  ansible.builtin.stat:
+    path: "{{ kweaver_online.repo_dir }}"
+  register: kweaver_online_repo_dir
+
+- name: Remove non-git KWeaver source directory residue
+  ansible.builtin.file:
+    path: "{{ kweaver_online.repo_dir }}"
+    state: absent
+  when:
+    - (kweaver_online_repo_dir.stat.exists | default(false)) | bool
+    - not ((kweaver_online_repo_git_dir.stat.exists | default(false)) | bool)
+
+- name: Clone KWeaver Core source when absent
+  ansible.builtin.command:
+    argv:
+      - git
+      - clone
+      - "{{ kweaver_online.repo_url }}"
+      - "{{ kweaver_online.repo_dir }}"
+  when: not ((kweaver_online_repo_git_dir.stat.exists | default(false)) | bool)
+
+- name: Point KWeaver source at upstream repository
+  ansible.builtin.command:
+    argv:
+      - git
+      - -C
+      - "{{ kweaver_online.repo_dir }}"
+      - remote
+      - set-url
+      - origin
+      - "{{ kweaver_online.repo_url }}"
+
+- name: Fetch KWeaver source refs
+  ansible.builtin.command:
+    argv:
+      - git
+      - -C
+      - "{{ kweaver_online.repo_dir }}"
+      - fetch
+      - --prune
+      - --tags
+      - origin
+
+- name: Check out KWeaver Core release ref
+  ansible.builtin.shell: |
+    set -euo pipefail
+    for ref in {{ kweaver_online_ref_candidates | map('quote') | join(' ') }}; do
+      [ -n "${ref}" ] || continue
+      if git -C {{ kweaver_online.repo_dir | quote }} rev-parse --verify --quiet "origin/${ref}^{commit}" >/dev/null; then
+        git -C {{ kweaver_online.repo_dir | quote }} checkout --force -B "deploy-{{ kweaver_online.version }}" "origin/${ref}"
+        printf '%s\n' "origin/${ref}"
+        exit 0
+      fi
+      if git -C {{ kweaver_online.repo_dir | quote }} rev-parse --verify --quiet "${ref}^{commit}" >/dev/null; then
+        git -C {{ kweaver_online.repo_dir | quote }} checkout --force "${ref}"
+        printf '%s\n' "${ref}"
+        exit 0
+      fi
+    done
+    echo "Unable to find KWeaver Core source ref from configured candidates." >&2
+    exit 1
+  args:
+    executable: /bin/bash
+  register: kweaver_online_checked_out_ref
+
+- name: Read checked out KWeaver source commit
+  ansible.builtin.command:
+    argv:
+      - git
+      - -C
+      - "{{ kweaver_online.repo_dir }}"
+      - rev-parse
+      - HEAD
+  register: kweaver_online_source_commit
+  changed_when: false
+
+- name: Check official KWeaver Core deploy.sh entrypoint
+  ansible.builtin.stat:
+    path: "{{ kweaver_online.deploy_dir }}/deploy.sh"
+  register: kweaver_online_deploy_sh
+
+- name: Assert official KWeaver Core deploy.sh entrypoint exists
+  ansible.builtin.assert:
+    that:
+      - kweaver_online_deploy_sh.stat.exists | bool
+    fail_msg: "KWeaver official deploy.sh was not found under {{ kweaver_online.deploy_dir }}."
+
+- name: Ensure official KWeaver Core deploy.sh is executable
+  ansible.builtin.file:
+    path: "{{ kweaver_online.deploy_dir }}/deploy.sh"
+    mode: "0755"
+
+- name: Set official KWeaver Core install command
+  ansible.builtin.set_fact:
+    kweaver_online_install_argv:
+      - ./deploy.sh
+      - kweaver-core
+      - install
+
+- name: Print KWeaver online source selection
+  ansible.builtin.debug:
+    msg:
+      - "Checked out ref: {{ kweaver_online_checked_out_ref.stdout }}"
+      - "Source commit: {{ kweaver_online_source_commit.stdout }}"
+      - "Install command: {{ kweaver_online_install_argv | join(' ') }}"
+      - "KWeaver Core success is determined only by this command exit code."
+
+- name: Remove failed KWeaver resource Helm releases before replay
+  ansible.builtin.shell: |
+    set -euo pipefail
+    for namespace in resource kweaver ingress-nginx; do
+      helm list -n "${namespace}" -a --short 2>/dev/null \
+        | while read -r release; do
+            [ -n "${release}" ] || continue
+            status="$(helm status "${release}" -n "${namespace}" 2>/dev/null | awk '/^STATUS:/ {print $2; exit}')"
+            case "${status}" in
+              failed|pending-install|pending-upgrade|pending-rollback)
+                helm uninstall "${release}" -n "${namespace}" || true
+                ;;
+            esac
+          done
+    done
+  args:
+    executable: /bin/bash
+  when: kweaver_online.cleanup_failed_releases | default(true) | bool
+
+- name: Remove failed KWeaver pending PVC residue before replay
+  ansible.builtin.shell: |
+    set -euo pipefail
+    kubectl get pvc -n resource --no-headers 2>/dev/null \
+      | awk '$2=="Pending"{print $1}' \
+      | while read -r pvc; do
+          [ -n "${pvc}" ] || continue
+          kubectl delete pvc -n resource "${pvc}" --ignore-not-found
+        done
+  args:
+    executable: /bin/bash
+  when: kweaver_online.cleanup_failed_releases | default(true) | bool
+
+- name: Install KWeaver Core through official atomic command
+  ansible.builtin.command:
+    argv: "{{ kweaver_online_install_argv }}"
+  args:
+    chdir: "{{ kweaver_online.deploy_dir }}"
+  environment:
+    CONF_DIR: "{{ kweaver.config_dir }}"
+    CONFIG_YAML_PATH: "{{ kweaver.config_path }}"
+    CONFIRM_ACCESS_ADDRESS: "false"
+    KWEAVER_ACCESS_ADDRESS: "https://{{ ansible_host | default('127.0.0.1') }}:{{ ingress.managed_nodeport.https_node_port }}"
+    INGRESS_NGINX_HOSTNETWORK: "false"
+    INGRESS_NGINX_CLASS: "{{ ingress.class }}"
+    INGRESS_NGINX_HTTP_PORT: "{{ ingress.managed_nodeport.http_node_port | string }}"
+    INGRESS_NGINX_HTTPS_PORT: "{{ ingress.managed_nodeport.https_node_port | string }}"
+    AUTO_INSTALL_INGRESS_NGINX: "true"
+    IMAGE_REGISTRY: "{{ kweaver.image_registry }}"
+
+- name: Render KWeaver online install state ConfigMap manifest
+  ansible.builtin.copy:
+    dest: "{{ generated_root }}/kweaver-online-state.yaml"
+    mode: "0600"
+    content: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: {{ kweaver_online.state_configmap_name }}
+        namespace: {{ kweaver.namespace }}
+      data:
+        install_mode: online
+        target_version: {{ kweaver_online.version | quote }}
+        repo_url: {{ kweaver_online.repo_url | quote }}
+        git_ref: {{ kweaver_online.git_ref | quote }}
+        source_commit: {{ kweaver_online_source_commit.stdout | quote }}
+        install_command: {{ (kweaver_online_install_argv | join(' ')) | quote }}
+        success_source: official_command_exit_code
+        last_success_time: {{ ansible_date_time.iso8601 | quote }}
+
+- name: Persist KWeaver online install state
+  ansible.builtin.command: "kubectl apply -f {{ generated_root }}/kweaver-online-state.yaml"

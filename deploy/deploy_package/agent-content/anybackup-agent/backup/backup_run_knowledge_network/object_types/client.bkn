@@ -1,0 +1,35 @@
+---
+type: object_type
+id: client
+name: 客户端
+tags: []
+---
+
+## ObjectType: 客户端
+
+用于描述参与备份任务执行的客户端主数据，包括客户端名称、类型、状态和机器标识信息。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | client | client |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| mac_address | 客户端机器码 | string | 客户端机器唯一标识 | mac_address |
+| name | 客户端名称 | string | 客户端名称 | name |
+| type | 客户端类型 | integer | 客户端类型 | type |
+| id | 客户端ID | string | 客户端唯一标识 | id |
+| status | 客户端状态 | integer | 客户端运行状态 | status |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

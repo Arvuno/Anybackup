@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sandbox CLI Overlay"
+  short_description: "Inject foundation-cli into the KWeaver sandbox image."
+  default_prompt: "Use this skill to overlay foundation-cli into the sandbox image and make it available to the target Kubernetes cluster."

@@ -1,0 +1,150 @@
+---
+- name: Resolve KWeaver core-only public access host
+  ansible.builtin.set_fact:
+    verify_core_only_access_host: >-
+      {{
+        (ingress.public_node_ip | default('', true))
+        or (ansible_host | default(''))
+        or ((ansible_default_ipv4.address) if (ansible_default_ipv4 is defined and ansible_default_ipv4.address is defined) else '')
+      }}
+
+- name: Wait for V9 infra statefulsets
+  ansible.builtin.command: "kubectl rollout status statefulset/{{ item }} -n {{ v9_infra.namespace }} --timeout={{ verify.timeout }}"
+  loop:
+    - v9-infra-postgres
+    - v9-infra-rabbitmq
+    - v9-infra-redis
+    - v9-infra-opensearch
+  loop_control:
+    label: "{{ item }}"
+  changed_when: false
+
+- name: Wait for ingress-nginx controller deployment
+  ansible.builtin.command: >-
+    kubectl rollout status deployment/{{ ingress.managed_nodeport.controller_service_name }}
+    -n {{ ingress.managed_nodeport.controller_namespace }}
+    --timeout={{ verify.timeout }}
+  changed_when: false
+
+- name: Wait for KWeaver platform dependency statefulsets
+  ansible.builtin.command: "kubectl rollout status statefulset/{{ item }} -n {{ kweaver.resource_namespace }} --timeout={{ verify.timeout }}"
+  loop:
+    - mariadb-proton-mariadb
+    - redis-proton-redis
+    - zookeeper
+    - kafka-broker
+    - kafka-controller
+    - opensearch-cluster-master
+  loop_control:
+    label: "{{ item }}"
+  changed_when: false
+
+- name: Wait for KWeaver application namespace running pods
+  ansible.builtin.shell: |
+    set -euo pipefail
+    pods="$(kubectl get pods -n {{ kweaver.namespace }} --field-selector=status.phase=Running -o jsonpath='{range .items[*]}pod/{.metadata.name} {end}')"
+    if [ -n "$pods" ]; then
+      kubectl wait -n {{ kweaver.namespace }} --for=condition=Ready $pods --timeout={{ verify.timeout }}
+    fi
+  changed_when: false
+
+- name: Assert managed ingress class exists
+  ansible.builtin.command: "kubectl get ingressclass {{ ingress.class }}"
+  changed_when: false
+
+- name: Assert key KWeaver ingress resources exist
+  ansible.builtin.command: "kubectl get ingress -n {{ kweaver.namespace }} {{ item }}"
+  loop:
+    - ingress-informationsecurityfabric
+    - rule-isfweb
+  loop_control:
+    label: "{{ item }}"
+  changed_when: false
+
+- name: Collect ingress-nginx summary
+  ansible.builtin.command: "kubectl get pods,svc -n {{ ingress.managed_nodeport.controller_namespace }}"
+  register: verify_core_only_ingress_summary
+  changed_when: false
+
+- name: Collect V9 infra summary
+  ansible.builtin.command: "kubectl get pods,svc -n {{ v9_infra.namespace }}"
+  register: verify_core_only_infra_summary
+  changed_when: false
+
+- name: Collect KWeaver resource summary
+  ansible.builtin.command: "kubectl get pods,svc -n {{ kweaver.resource_namespace }}"
+  register: verify_core_only_resource_summary
+  changed_when: false
+
+- name: Collect KWeaver application summary
+  ansible.builtin.command: "kubectl get pods,svc -n {{ kweaver.namespace }}"
+  register: verify_core_only_kweaver_summary
+  changed_when: false
+
+- name: Collect KWeaver ingress summary
+  ansible.builtin.command: "kubectl get ingress -n {{ kweaver.namespace }}"
+  register: verify_core_only_kweaver_ingress_summary
+  changed_when: false
+
+- name: Collect ingress class summary
+  ansible.builtin.command: "kubectl get ingressclass"
+  register: verify_core_only_ingressclass_summary
+  changed_when: false
+
+- name: Collect Helm releases for KWeaver namespace
+  ansible.builtin.command: "helm list -n {{ kweaver.namespace }}"
+  register: verify_core_only_helm_kweaver
+  changed_when: false
+
+- name: Collect Helm releases for KWeaver resource namespace
+  ansible.builtin.command: "helm list -n {{ kweaver.resource_namespace }}"
+  register: verify_core_only_helm_resource
+  changed_when: false
+
+- name: Collect Helm releases for V9 infra namespace
+  ansible.builtin.command: "helm list -n {{ v9_infra.namespace }}"
+  register: verify_core_only_helm_v9_infra
+  changed_when: false
+
+- name: Print KWeaver core-only access summary
+  ansible.builtin.debug:
+    msg:
+      - "KWeaver core-only verification completed."
+      - "Managed ingress controller: {{ ingress.managed_nodeport.controller_namespace }}/{{ ingress.managed_nodeport.controller_service_name }}"
+      - "KWeaver access base URL: https://{{ verify_core_only_access_host }}:{{ ingress.managed_nodeport.https_node_port }}"
+
+- name: Print ingress-nginx summary
+  ansible.builtin.debug:
+    msg: "{{ verify_core_only_ingress_summary.stdout_lines }}"
+
+- name: Print V9 infra summary
+  ansible.builtin.debug:
+    msg: "{{ verify_core_only_infra_summary.stdout_lines }}"
+
+- name: Print KWeaver resource summary
+  ansible.builtin.debug:
+    msg: "{{ verify_core_only_resource_summary.stdout_lines }}"
+
+- name: Print KWeaver application summary
+  ansible.builtin.debug:
+    msg: "{{ verify_core_only_kweaver_summary.stdout_lines }}"
+
+- name: Print KWeaver ingress summary
+  ansible.builtin.debug:
+    msg: "{{ verify_core_only_kweaver_ingress_summary.stdout_lines }}"
+
+- name: Print ingress class summary
+  ansible.builtin.debug:
+    msg: "{{ verify_core_only_ingressclass_summary.stdout_lines }}"
+
+- name: Print Helm summary for V9 infra
+  ansible.builtin.debug:
+    msg: "{{ verify_core_only_helm_v9_infra.stdout_lines }}"
+
+- name: Print Helm summary for KWeaver resource namespace
+  ansible.builtin.debug:
+    msg: "{{ verify_core_only_helm_resource.stdout_lines }}"
+
+- name: Print Helm summary for KWeaver namespace
+  ansible.builtin.debug:
+    msg: "{{ verify_core_only_helm_kweaver.stdout_lines }}"

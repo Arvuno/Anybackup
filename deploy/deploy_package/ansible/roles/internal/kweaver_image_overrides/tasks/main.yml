@@ -1,0 +1,36 @@
+---
+- name: Apply configured KWeaver deployment image overrides
+  ansible.builtin.shell: |
+    set -euo pipefail
+    namespace={{ item.namespace | quote }}
+    deployment={{ item.deployment | quote }}
+    container={{ item.container | quote }}
+    target_image={{ item.image | quote }}
+    rollout_timeout={{ item.rollout_timeout | default(kweaver_image_overrides.rollout_timeout | default('300s')) | quote }}
+
+    kubectl get deployment "${deployment}" -n "${namespace}" >/dev/null
+
+    current_image="$(
+      kubectl get deployment "${deployment}" -n "${namespace}" \
+        -o jsonpath="{.spec.template.spec.containers[?(@.name=='${container}')].image}"
+    )"
+    if [ -z "${current_image}" ]; then
+      echo "Container ${container} was not found in deployment ${namespace}/${deployment}" >&2
+      exit 2
+    fi
+
+    if [ "${current_image}" = "${target_image}" ]; then
+      echo "SKIP ${namespace}/${deployment} ${container} already uses ${target_image}"
+      exit 0
+    fi
+
+    kubectl set image "deployment/${deployment}" -n "${namespace}" "${container}=${target_image}"
+    kubectl rollout status "deployment/${deployment}" -n "${namespace}" --timeout="${rollout_timeout}"
+    echo "UPDATED ${namespace}/${deployment} ${container} from ${current_image} to ${target_image}"
+  args:
+    executable: /bin/bash
+  loop: "{{ kweaver_image_overrides['items'] | default([]) }}"
+  changed_when: "'UPDATED ' in image_override_apply.stdout"
+  register: image_override_apply
+  when:
+    - item.enabled | default(true) | bool

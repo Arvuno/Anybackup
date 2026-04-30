@@ -1,0 +1,39 @@
+---
+type: object_type
+id: protection_object
+name: 数据保护对象
+tags: [MySQL, 数据库, 保护对象, 恢复]
+---
+
+## ObjectType: 数据保护对象
+
+MySQL数据库恢复场景中的数据保护对象，包括MySQL实例、数据库、表等。数据保护对象是恢复操作的核心实体，记录了需要保护的数据库资源信息。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| objectId | 对象ID | string | 对象唯一标识符（去掉横杠的UUID） | objectId |
+| name | 对象名称 | string | 对象名称，如MySQL-3306、OrderDB等 | name |
+| appType | 应用类型 | string | 应用类型（区分具体应用类型，如MySQL、Oracle） | appType |
+| platName | 平台信息 | string | 平台信息，格式通常为 `clientName(clientIp)`，用于识别备份源客户端 | platName |
+| business_name | 业务名称 | string | 对应的业务名称，如生产订单数据库 | business_name |
+| online_status | 联机状态 | string | 联机状态（running/stopped/error/unknown） | online_status |
+| authorization_status | 授权状态 | string | 授权状态（authorized/unauthorized/expired） | authorization_status |
+| system_username | 系统用户名 | string | 系统用户名，如mysql | system_username |
+| detail | 扩展信息 | string | 扩展字段（JSON字符串格式） | detail |
+
+### Keys
+
+Primary Keys: objectId
+Display Key: name
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | HyperBackupMgmServiceDB.protect_object | HyperBackupMgmServiceDB.protect_object |

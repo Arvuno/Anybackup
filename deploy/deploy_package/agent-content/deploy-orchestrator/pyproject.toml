@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deploy-orchestrator"
+version = "0.1.0"
+description = "KWeaver 声明式部署编排器"
+requires-python = ">=3.9"
+dependencies = ["PyYAML>=6.0"]
+
+[project.scripts]
+deploy-orchestrator = "deploy_orchestrator.main:main"
+
+[tool.setuptools.packages.find]
+include = ["deploy_orchestrator*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

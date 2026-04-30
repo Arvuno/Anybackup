@@ -1,0 +1,250 @@
+---
+- name: Validate ingress mode
+  ansible.builtin.assert:
+    that:
+      - ingress.mode in ["reuse-existing", "managed-nodeport"]
+    fail_msg: "ingress.mode must be one of reuse-existing or managed-nodeport."
+
+- name: Resolve preferred public node IP
+  ansible.builtin.set_fact:
+    preferred_public_node_ip: >-
+      {{
+        (ingress.public_node_ip | default('', true))
+        or (ansible_host | default(''))
+        or ((ansible_default_ipv4.address) if (ansible_default_ipv4 is defined and ansible_default_ipv4.address is defined) else '')
+      }}
+
+- name: Use managed NodePort ingress facts for release deployment
+  ansible.builtin.set_fact:
+    effective_ingress_class: "{{ (ingress.class | default('', true)) or 'class-443' }}"
+    effective_ingress_controller_namespace: "{{ ingress.managed_nodeport.controller_namespace }}"
+    effective_ingress_controller_service_name: "{{ ingress.managed_nodeport.controller_service_name }}"
+    effective_ingress_exposure_mode: NodePort
+    effective_ingress_http_port: 80
+    effective_ingress_http_node_port: "{{ ingress.managed_nodeport.http_node_port | int }}"
+    effective_public_scheme: http
+    effective_public_host: "{{ preferred_public_node_ip }}"
+    effective_public_port: "{{ ingress.managed_nodeport.http_node_port | int }}"
+  when: ingress.mode == "managed-nodeport"
+
+- name: Assert managed NodePort ingress has a reachable node IP
+  ansible.builtin.assert:
+    that:
+      - effective_public_host | default('') | length > 0
+    fail_msg: >-
+      managed-nodeport mode requires a reachable node IP.
+      Set ingress.public_node_ip explicitly if ansible_host autodetection is unsuitable.
+  when: ingress.mode == "managed-nodeport"
+
+- name: Discover reusable ingress classes
+  when: ingress.mode == "reuse-existing"
+  block:
+    - name: Query ingress classes
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - get
+          - ingressclass
+          - -o
+          - "jsonpath={range .items[*]}{.metadata.name}{'\\n'}{end}"
+      register: ingress_class_names_raw
+      changed_when: false
+
+    - name: Set detected ingress classes
+      ansible.builtin.set_fact:
+        detected_ingress_classes: "{{ ingress_class_names_raw.stdout_lines | reject('equalto', '') | list }}"
+
+    - name: Assert at least one ingress class exists
+      ansible.builtin.assert:
+        that:
+          - detected_ingress_classes | length > 0
+        fail_msg: >-
+          No Kubernetes IngressClass was detected on the target cluster.
+          reuse-existing mode requires an existing ingress controller and a usable IngressClass.
+
+    - name: Query default ingress class
+      ansible.builtin.shell: |
+        set -eu
+        kubectl get ingressclass -o jsonpath="{range .items[*]}{.metadata.name}{'|'}{.metadata.annotations.ingressclass\.kubernetes\.io/is-default-class}{'\n'}{end}" \
+          | awk -F'|' '$2=="true"{print $1; exit}'
+      register: default_ingress_class_raw
+      changed_when: false
+      failed_when: false
+
+    - name: Resolve effective ingress class
+      ansible.builtin.set_fact:
+        effective_ingress_class: >-
+          {{
+            (ingress.class | default('', true))
+            or (default_ingress_class_raw.stdout | trim)
+            or (detected_ingress_classes | first)
+          }}
+
+    - name: Auto-detect reusable ingress controller service
+      ansible.builtin.shell: |
+        set -eu
+        services="$(kubectl get svc --all-namespaces -o jsonpath="{range .items[*]}{.metadata.namespace}{'|'}{.metadata.name}{'|'}{.spec.type}{'\n'}{end}")"
+        best_line=""
+        best_score=-1
+        while IFS='|' read -r svc_ns svc_name svc_type; do
+          [ -n "${svc_ns}" ] || continue
+          case "${svc_type}" in
+            NodePort|LoadBalancer) ;;
+            *) continue ;;
+          esac
+          score=0
+          case "${svc_name}" in
+            *ingress*|*nginx*|*traefik*) score=$((score + 2)) ;;
+          esac
+          case "${svc_ns}" in
+            *ingress*|*nginx*|*traefik*) score=$((score + 1)) ;;
+          esac
+          if [ "${score}" -gt "${best_score}" ]; then
+            best_score="${score}"
+            best_line="${svc_ns}|${svc_name}"
+          fi
+        done <<EOF
+        ${services}
+        EOF
+        printf '%s' "${best_line}"
+      register: autodetected_ingress_service_raw
+      changed_when: false
+      when: ingress.existing.controller_service_name | default('', true) | length == 0
+
+    - name: Resolve ingress controller service coordinates
+      ansible.builtin.set_fact:
+        effective_ingress_controller_namespace: >-
+          {{
+            (ingress.existing.controller_namespace | default('', true))
+            or (
+              (autodetected_ingress_service_raw.stdout | default('') | trim).split('|')[0]
+              if ((autodetected_ingress_service_raw.stdout | default('') | trim) | length > 0)
+              else ''
+            )
+          }}
+        effective_ingress_controller_service_name: >-
+          {{
+            (ingress.existing.controller_service_name | default('', true))
+            or (
+              (autodetected_ingress_service_raw.stdout | default('') | trim).split('|')[1]
+              if ((autodetected_ingress_service_raw.stdout | default('') | trim) | length > 0)
+              else ''
+            )
+          }}
+
+    - name: Assert reusable ingress controller service was found
+      ansible.builtin.assert:
+        that:
+          - effective_ingress_controller_namespace | length > 0
+          - effective_ingress_controller_service_name | length > 0
+        fail_msg: >-
+          Could not find a reusable ingress controller service in the cluster.
+          Set ingress.existing.controller_namespace and ingress.existing.controller_service_name explicitly.
+
+    - name: Query ingress controller service type
+      ansible.builtin.command: >-
+        kubectl get svc -n {{ effective_ingress_controller_namespace }} {{ effective_ingress_controller_service_name }}
+        -o jsonpath={.spec.type}
+      register: ingress_controller_type_raw
+      changed_when: false
+
+    - name: Query ingress controller service ports
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - get
+          - svc
+          - -n
+          - "{{ effective_ingress_controller_namespace }}"
+          - "{{ effective_ingress_controller_service_name }}"
+          - -o
+          - "jsonpath={range .spec.ports[*]}{.name}{'|'}{.port}{'|'}{.nodePort}{'\\n'}{end}"
+      register: ingress_controller_ports_raw
+      changed_when: false
+
+    - name: Resolve ingress controller HTTP port line
+      ansible.builtin.set_fact:
+        effective_ingress_http_port_line: >-
+          {{
+            (ingress_controller_ports_raw.stdout_lines | reject('equalto', '') | select('search', '(^|\\|)http\\|') | list | first)
+            or (ingress_controller_ports_raw.stdout_lines | reject('equalto', '') | select('search', '\\|80\\|') | list | first)
+            or ((ingress_controller_ports_raw.stdout_lines | reject('equalto', '') | list | first) | default(''))
+          }}
+
+    - name: Query ingress controller load balancer IP
+      ansible.builtin.command: >-
+        kubectl get svc -n {{ effective_ingress_controller_namespace }} {{ effective_ingress_controller_service_name }}
+        -o jsonpath={.status.loadBalancer.ingress[0].ip}
+      register: ingress_controller_lb_ip_raw
+      changed_when: false
+      failed_when: false
+
+    - name: Query ingress controller load balancer hostname
+      ansible.builtin.command: >-
+        kubectl get svc -n {{ effective_ingress_controller_namespace }} {{ effective_ingress_controller_service_name }}
+        -o jsonpath={.status.loadBalancer.ingress[0].hostname}
+      register: ingress_controller_lb_hostname_raw
+      changed_when: false
+      failed_when: false
+
+    - name: Resolve effective public endpoint facts
+      ansible.builtin.set_fact:
+        effective_ingress_exposure_mode: "{{ ingress_controller_type_raw.stdout }}"
+        effective_ingress_http_port: "{{ (effective_ingress_http_port_line.split('|')[1] | default('0')) | int }}"
+        effective_ingress_http_node_port: "{{ (effective_ingress_http_port_line.split('|')[2] | default('0')) | int }}"
+        effective_public_scheme: http
+        effective_public_host: >-
+          {{
+            (
+              preferred_public_node_ip
+              if ingress_controller_type_raw.stdout == 'NodePort'
+              else (
+                (ingress_controller_lb_ip_raw.stdout | default('') | trim)
+                or (ingress_controller_lb_hostname_raw.stdout | default('') | trim)
+              )
+            )
+          }}
+        effective_public_port: >-
+          {{
+            (
+              (
+                ingress.existing.node_port
+                if (ingress.existing.node_port | default('', true) | length > 0)
+                else effective_ingress_http_node_port
+              )
+              if ingress_controller_type_raw.stdout == 'NodePort'
+              else effective_ingress_http_port
+            ) | int
+          }}
+
+- name: Resolve effective public base URL
+  ansible.builtin.set_fact:
+    effective_public_base_url: >-
+      {{
+        (public_base_url | default('', true))
+        or (effective_public_scheme ~ '://' ~ effective_public_host ~ ':' ~ (effective_public_port | string))
+      }}
+
+- name: Write network preflight summary
+  ansible.builtin.copy:
+    dest: "{{ generated_root }}/network-preflight.txt"
+    mode: "0644"
+    content: |
+      ingress_mode={{ ingress.mode }}
+      ingress_class={{ effective_ingress_class }}
+      ingress_controller_namespace={{ effective_ingress_controller_namespace }}
+      ingress_controller_service={{ effective_ingress_controller_service_name }}
+      ingress_exposure_mode={{ effective_ingress_exposure_mode }}
+      ingress_http_port={{ effective_ingress_http_port }}
+      ingress_http_node_port={{ effective_ingress_http_node_port }}
+      public_host={{ effective_public_host }}
+      public_port={{ effective_public_port }}
+      public_base_url={{ effective_public_base_url }}
+
+- name: Print network preflight summary
+  ansible.builtin.debug:
+    msg:
+      - "Ingress mode: {{ ingress.mode }}"
+      - "IngressClass: {{ effective_ingress_class }}"
+      - "Ingress controller: {{ effective_ingress_controller_namespace }}/{{ effective_ingress_controller_service_name }} ({{ effective_ingress_exposure_mode }})"
+      - "Public access: {{ effective_public_base_url }}"

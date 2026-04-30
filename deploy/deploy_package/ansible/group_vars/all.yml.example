@@ -1,0 +1,597 @@
+remote_deploy_root: /opt/v9-alpha-deploy
+remote_source_root: /opt/v9-sources
+generated_root: "{{ remote_deploy_root }}/generated"
+remote_chart_root: "{{ remote_deploy_root }}/charts"
+remote_smoke_root: "{{ remote_deploy_root }}/scripts/smoke"
+remote_sandbox_build_dir: "{{ remote_deploy_root }}/sandbox-build"
+artifacts_root: "{{ remote_deploy_root }}/artifacts"
+deployment_chart_source_root: "{{ deployment_chart_source_root_override | default(package_root ~ '/../helm') }}"
+anybackup_repo_root: "{{ anybackup_repo_root_override | default(package_root ~ '/../..') }}"
+deployment_profile: full
+foundation_cli_min_bytes: 1048576
+
+k8s_cluster:
+  pod_cidr: "{{ k8s_pod_cidr | default('10.244.0.0/16') }}"
+  service_cidr: "{{ k8s_service_cidr | default('10.96.0.0/12') }}"
+  helm_version: "{{ k8s_helm_version | default('v3.15.4') }}"
+  flannel_manifest_url: "{{ k8s_flannel_manifest_url | default('https://raw.githubusercontent.com/flannel-io/flannel/v0.25.7/Documentation/kube-flannel.yml') }}"
+  local_path_manifest_url: "{{ k8s_local_path_manifest_url | default('https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.28/deploy/local-path-storage.yaml') }}"
+  local_path_image: "{{ k8s_local_path_image | default('docker.m.daocloud.io/rancher/local-path-provisioner:v0.0.28') }}"
+  local_path_helper_image: "{{ k8s_local_path_helper_image | default('docker.m.daocloud.io/library/busybox:latest') }}"
+
+foundation:
+  enabled: "{{ foundation_enabled | default(false) }}"
+  mode: "{{ foundation_mode | default('integrated') }}"
+  package_path: "{{ foundation_package_path | default('/backupsoft/Linux_el7_x64-latest.tar.gz') }}"
+  work_dir: /backupsoft
+  install_root: "{{ foundation_install_root | default('/backupsoft/AnyBackupServer') }}"
+  install_marker: "{{ foundation_install_root | default('/backupsoft/AnyBackupServer') }}/etc/installenv"
+  install_cfg: "{{ foundation_install_root | default('/backupsoft/AnyBackupServer') }}/install.cfg"
+  self_ip: "{{ foundation_self_ip | default('') }}"
+  access_host: "{{ foundation_access_host | default(foundation_self_ip | default('')) }}"
+  product: Enterprise
+  server_type: NONE
+  mgm_type: ControlNode
+  server_mode: All
+  cluster_type: single
+  force_install: false
+  strict_existing_config: true
+
+offline:
+  mode: false
+  remote_root: "{{ remote_deploy_root }}/offline"
+  bin_root: "{{ remote_deploy_root }}/bin"
+  skip_kweaver_when_healthy: true
+
+deployment_namespace: anybackup-ai
+helm_wait_timeout: 30m
+
+ingress:
+  mode: managed-nodeport
+  class: class-443
+  public_node_ip: ""
+  existing:
+    controller_namespace: ""
+    controller_service_name: ""
+    node_port: ""
+  managed_nodeport:
+    controller_namespace: ingress-nginx
+    controller_service_name: ingress-nginx-controller
+    http_node_port: 30080
+    https_node_port: 30443
+
+public_base_url: ""
+
+# Legacy Proton/offline paths are retained only for cleanup/backward compatibility.
+# The default KWeaver Core install path uses kweaver_online below.
+proton_cli:
+  local_dir: "{{ package_root }}/bin/proton-cli/proton-cli/bin"
+  binary_path: "{{ proton_cli.local_dir }}/proton-cli"
+  remote_bin_path: /usr/local/bin/proton-cli
+
+proton_offline:
+  package_dir: "{{ package_root }}/offline-packages/proton"
+  package_path: "{{ proton_offline.package_dir }}/proton-offline-package-24768920921-amd64.tar"
+  remote_dir: "{{ offline.remote_root }}/proton"
+  remote_package_path: "{{ proton_offline.remote_dir }}/{{ proton_offline.package_path | basename }}"
+  extracted_dir: "{{ proton_offline.remote_dir }}/proton-offline-package"
+  registry_host: "{{ ansible_host | default('127.0.0.1') }}"
+  registry_port: 5000
+  chartmuseum_port: 8081
+
+cleanup:
+  validation_namespaces:
+    - middleware
+    - "{{ v9_infra.namespace }}"
+    - "{{ ingress.managed_nodeport.controller_namespace }}"
+    - "{{ kweaver.resource_namespace }}"
+    - "{{ kweaver.namespace }}"
+    - "{{ deployment_namespace }}"
+    - anybackup-ai
+  validation_ingress_classes:
+    - "{{ ingress.class }}"
+    - traefik
+  validation_pvs:
+    - minio-pv
+  proton_services:
+    - ecms
+    - proton-cr
+  proton_packages:
+    - ecms
+    - haproxy
+    - proton-cr
+    - proton-cr-chartmuseum
+    - proton-cr-registry
+  remote_cleanup_paths:
+    - "{{ remote_deploy_root }}"
+    - "{{ remote_source_root }}"
+    - "{{ offline.remote_root }}"
+    - "{{ kweaver.config_dir }}"
+  containerd_registry_override_dir: "/etc/containerd/certs.d/{{ proton_offline.registry_host }}:{{ proton_offline.registry_port }}"
+
+kweaver_offline:
+  version: 0.6.0
+  package_dir: "{{ package_root }}/offline-packages/kweaver-core/{{ kweaver_offline.version }}"
+  package_path: "{{ kweaver_offline.package_dir }}/kweaver-core-{{ kweaver_offline.version }}-offline-package.tar"
+  manifests_dir: "{{ kweaver_offline.package_dir }}/manifests"
+  deploy_bundle_dir: "{{ kweaver_offline.package_dir }}/deploy"
+  core_manifest_path: "{{ kweaver_offline.manifests_dir }}/kweaver-core.yaml"
+  isf_manifest_path: "{{ kweaver_offline.manifests_dir }}/isf.yaml"
+  remote_root: "{{ offline.remote_root }}/kweaver-core/{{ kweaver_offline.version }}"
+  remote_package_path: "{{ kweaver_offline.remote_root }}/{{ kweaver_offline.package_path | basename }}"
+  remote_manifests_dir: "{{ kweaver_offline.remote_root }}/manifests"
+  remote_deploy_dir: "{{ remote_deploy_root }}/kweaver-core-deploy"
+  allow_upgrade: false
+  force_reinstall: false
+  state_configmap_name: kweaver-offline-install-state
+
+kweaver_online:
+  version: 0.6.0
+  repo_url: https://github.com/kweaver-ai/kweaver-core.git
+  git_ref: "release/0.6.0"
+  repo_dir: /opt/v9-sources/kweaver-core
+  deploy_dir: /opt/v9-sources/kweaver-core/deploy
+  state_configmap_name: kweaver-online-install-state
+  cleanup_failed_releases: "{{ kweaver_online_cleanup_failed_releases | default(true) }}"
+
+kweaver_core_compat:
+  enabled: "{{ kweaver_core_compat_enabled | default(false) }}"
+  deploy_web:
+    enabled: "{{ kweaver_core_compat_deploy_web_enabled | default(false) }}"
+    release_name: deploy-web
+    service_name: deploy-web-service
+    repo_name: kweaver
+    repo_url: https://kweaver-io.github.io/charts
+    chart_ref: kweaver/deploy-web
+    chart_version: 0.3.0
+    image_registry: "{{ kweaver.image_registry }}"
+    database: deploy
+    rollout_timeout: 4m
+    access_address:
+      host: "{{ kweaver_core_compat_deploy_web_host | default('') }}"
+      port: "{{ kweaver_core_compat_deploy_web_port | default(ingress.managed_nodeport.https_node_port) }}"
+      scheme: https
+      path: /
+
+kweaver_cli:
+  enabled: "{{ kweaver_cli_enabled | default(true) }}"
+  base_url: "{{ kweaver_cli_base_url | default('') }}"
+  scheme: https
+  host: "{{ kweaver_cli_host | default('') }}"
+  port: "{{ kweaver_cli_port | default(ingress.managed_nodeport.https_node_port) }}"
+  alias: "{{ kweaver_cli_alias | default('local109') }}"
+  username: "{{ kweaver_cli_username | default(agent_content_kweaver_username | default('admin', true), true) }}"
+  password: "{{ kweaver_cli_password | default(agent_content_kweaver_password | default('V9_KILL_POLICY', true), true) }}"
+  initial_password: "{{ kweaver_cli_initial_password | default('eisoo.com', true) }}"
+  new_password: "{{ kweaver_cli_new_password | default(kweaver_cli_password | default(agent_content_kweaver_password | default('V9_KILL_POLICY', true), true), true) }}"
+  insecure: "{{ kweaver_cli_insecure | default(true) }}"
+  http_signin: "{{ kweaver_cli_http_signin | default(true) }}"
+  require_auth: "{{ kweaver_cli_require_auth | default(true) }}"
+  verify_bkn_api: "{{ kweaver_cli_verify_bkn_api | default(true) }}"
+  business_domain: "{{ kweaver_cli_business_domain | default(agent_content_business_domain | default('bd_public')) }}"
+
+service_contracts:
+  - contract_name: web_service
+    resource_name: agent-web
+    deployment_name: agent-web
+    namespace: "{{ deployment_namespace }}"
+    service_port: 80
+    public_path: /
+    external: true
+  - contract_name: api_gateway_service
+    resource_name: api-gateway-service-traefik
+    deployment_name: api-gateway-service-traefik
+    namespace: "{{ deployment_namespace }}"
+    service_port: 80
+    public_path: /api
+    external: false
+  - contract_name: auth_service
+    resource_name: auth-service-auth-service
+    deployment_name: auth-service-auth-service
+    namespace: "{{ deployment_namespace }}"
+    service_port: 80
+    public_path: /auth
+    external: false
+  - contract_name: conversation_service
+    resource_name: conversation-service-conversation-service
+    deployment_name: conversation-service-conversation-service
+    namespace: "{{ deployment_namespace }}"
+    service_port: 80
+    external: false
+  - contract_name: core_agent_service
+    resource_name: core-agent-service-core-agent-service
+    deployment_name: core-agent-service-core-agent-service
+    namespace: "{{ deployment_namespace }}"
+    service_port: "{{ core_agent_service.service_port }}"
+    external: false
+
+v9_infra:
+  release_name: v9-infra
+  namespace: v9-system
+  image_pull_policy: IfNotPresent
+  default_storage_class: local-path
+  postgres:
+    image: docker.m.daocloud.io/library/postgres:17
+    storage: 50Gi
+    storage_class: local-path
+    secret_name: v9-postgres-auth
+    service_name: v9-postgres
+    database: "{{ v9_postgres_database }}"
+    username: "{{ v9_postgres_username }}"
+  rabbitmq:
+    image: docker.m.daocloud.io/library/rabbitmq:3-management
+    storage: 10Gi
+    storage_class: local-path
+    secret_name: v9-rabbitmq-auth
+    service_name: v9-rabbitmq
+    username: "{{ v9_rabbitmq_username }}"
+  redis:
+    image: docker.m.daocloud.io/library/redis:7
+    storage: 10Gi
+    storage_class: local-path
+    secret_name: v9-redis-auth
+    service_name: v9-redis
+  opensearch:
+    image: docker.m.daocloud.io/opensearchproject/opensearch:3.6.0
+    init_image: docker.m.daocloud.io/library/busybox:latest
+    storage: 50Gi
+    storage_class: local-path
+    service_name: v9-opensearch
+    protocol: http
+
+v9_runtime:
+  secret_name: v9-runtime-connections
+  postgres_sync_url: "postgresql+psycopg://{{ v9_postgres_username }}:{{ v9_postgres_password }}@{{ v9_infra.postgres.service_name }}.{{ v9_infra.namespace }}.svc.cluster.local:5432/{{ v9_postgres_database }}"
+  postgres_async_url: "postgresql+asyncpg://{{ v9_postgres_username }}:{{ v9_postgres_password }}@{{ v9_infra.postgres.service_name }}.{{ v9_infra.namespace }}.svc.cluster.local:5432/{{ v9_postgres_database }}"
+  postgres_url: "postgresql+psycopg://{{ v9_postgres_username }}:{{ v9_postgres_password }}@{{ v9_infra.postgres.service_name }}.{{ v9_infra.namespace }}.svc.cluster.local:5432/{{ v9_postgres_database }}"
+  rabbitmq_url: "amqp://{{ v9_rabbitmq_username }}:{{ v9_rabbitmq_password }}@{{ v9_infra.rabbitmq.service_name }}.{{ v9_infra.namespace }}.svc.cluster.local:5672/"
+  redis_url: "{{ (v9_redis_url | default('', true)) or ('redis://:' ~ v9_redis_password ~ '@' ~ v9_infra.redis.service_name ~ '.' ~ v9_infra.namespace ~ '.svc.cluster.local:6379/0') }}"
+  opensearch_url: "{{ (v9_opensearch_url | default('', true)) or (v9_infra.opensearch.protocol ~ '://' ~ v9_infra.opensearch.service_name ~ '.' ~ v9_infra.namespace ~ '.svc.cluster.local:9200') }}"
+
+v9_services_image_registry: ""
+v9_services_image_tag: alpha1
+business_image_builds:
+  - name: conversation-service
+    source_dir: "{{ anybackup_repo_root }}/Agent/service/conversation"
+    dockerfile: Dockerfile
+    image_repository: conversation-service
+    image_tag: "{{ v9_services_image_tag }}"
+  - name: core-agent-service
+    source_dir: "{{ anybackup_repo_root }}/Agent/service/core_agent"
+    dockerfile: Dockerfile
+    image_repository: core-agent-service
+    image_tag: "{{ v9_services_image_tag }}"
+  - name: agent-web
+    source_dir: "{{ anybackup_repo_root }}/Agent/portal"
+    dockerfile: Dockerfile
+    image_repository: agent-web
+    image_tag: "{{ v9_services_image_tag }}"
+v9_services_common_env:
+  - name: APP_ENV
+    value: alpha
+  - name: LOG_LEVEL
+    value: INFO
+  - name: POSTGRES_URL
+    valueFromSecret:
+      name: "{{ v9_runtime.secret_name }}"
+      key: POSTGRES_URL
+  - name: RABBITMQ_URL
+    valueFromSecret:
+      name: "{{ v9_runtime.secret_name }}"
+      key: RABBITMQ_URL
+  - name: REDIS_URL
+    valueFromSecret:
+      name: "{{ v9_runtime.secret_name }}"
+      key: REDIS_URL
+  - name: OPENSEARCH_URL
+    valueFromSecret:
+      name: "{{ v9_runtime.secret_name }}"
+      key: OPENSEARCH_URL
+
+v9_services_resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+v9_services:
+  - name: conversation-service
+    enabled: true
+    replicas: 1
+    containerPort: 8080
+    servicePort: 80
+    repo: git@github.com:example/conversation-service.git
+    ref: main
+    dockerfile: Dockerfile
+    image_tag: "{{ v9_services_image_tag }}"
+    env: []
+  - name: plan-service
+    enabled: true
+    replicas: 1
+    containerPort: 8080
+    servicePort: 80
+    repo: git@github.com:example/plan-service.git
+    ref: main
+    dockerfile: Dockerfile
+    image_tag: "{{ v9_services_image_tag }}"
+    env: []
+  - name: admin-service
+    enabled: true
+    replicas: 1
+    containerPort: 8080
+    servicePort: 80
+    repo: git@github.com:example/admin-service.git
+    ref: main
+    dockerfile: Dockerfile
+    image_tag: "{{ v9_services_image_tag }}"
+    env: []
+  - name: approval-service
+    enabled: true
+    replicas: 1
+    containerPort: 8080
+    servicePort: 80
+    repo: git@github.com:example/approval-service.git
+    ref: main
+    dockerfile: Dockerfile
+    image_tag: "{{ v9_services_image_tag }}"
+    env: []
+  - name: integration-service
+    enabled: true
+    replicas: 1
+    containerPort: 8080
+    servicePort: 80
+    repo: git@github.com:example/integration-service.git
+    ref: main
+    dockerfile: Dockerfile
+    image_tag: "{{ v9_services_image_tag }}"
+    env: []
+
+core_agent_service:
+  release_name: core-agent-service
+  name: core-agent-service
+  replicas: 1
+  container_port: 50051
+  service_port: 80
+  repo: git@github.com:example/core-agent-service.git
+  ref: main
+  dockerfile: Dockerfile
+  image_registry: "{{ v9_services_image_registry }}"
+  image_tag: "{{ v9_services_image_tag }}"
+  postgres:
+    urlSecretRef:
+      name: "{{ v9_runtime.secret_name }}"
+      key: POSTGRES_URL
+  rabbitmq:
+    urlSecretRef:
+      name: "{{ v9_runtime.secret_name }}"
+      key: RABBITMQ_URL
+  redis:
+    urlSecretRef:
+      name: "{{ v9_runtime.secret_name }}"
+      key: REDIS_URL
+  opensearch:
+    urlSecretRef:
+      name: "{{ v9_runtime.secret_name }}"
+      key: OPENSEARCH_URL
+  kweaver:
+    baseUrl: "{{ kweaver_internal_base_url | default(kweaver_runtime_base_url | default('')) }}"
+    tokenSecretRef:
+      name: core-agent-kweaver-token
+      key: KWEAVER_TOKEN
+  presetAgents: "{{ preset_agents | default({}) }}"
+  extraEnv: []
+
+v9_postgres_username: v9
+v9_postgres_password: CHANGE_ME
+v9_postgres_database: v9
+
+v9_rabbitmq_username: v9
+v9_rabbitmq_password: CHANGE_ME
+v9_rabbitmq_erlang_cookie: CHANGE_ME
+
+v9_redis_password: CHANGE_ME
+
+kweaver:
+  remote_deploy_dir: /opt/v9-sources/kweaver-core/deploy
+  namespace: kweaver
+  resource_namespace: resource
+  config_dir: /opt/v9-alpha-deploy/kweaver-config
+  config_path: /opt/v9-alpha-deploy/kweaver-config/config.yaml
+  access_address:
+    host: ""
+    port: 30443
+    scheme: https
+    path: /
+  replica_count: 1
+  mode: Community
+  image_registry: swr.cn-east-3.myhuaweicloud.com/kweaver-ai
+  env:
+    language: en_US.UTF-8
+    timezone: Asia/Shanghai
+  flow_automation:
+    s3_default: default
+  dep_services:
+    mq:
+      auth:
+        mechanism: PLAIN
+        username: kafkauser
+        password: "{{ kweaver_kafka_password | default('') }}"
+      host: kafka.resource.svc.cluster.local
+      lookupd_host: ""
+      lookupd_port: 0
+      port: 9092
+      type: kafka
+    opensearch:
+      distribution: opensearch
+      host: opensearch-cluster-master.resource.svc.cluster.local
+      user: admin
+      password: "{{ kweaver_opensearch_password | default('') }}"
+      port: 9200
+      protocol: https
+      version: ""
+    rds:
+      admin_key: "{{ kweaver_rds_admin_key | default('') }}"
+      host: mariadb-proton-mariadb.resource.svc.cluster.local
+      host_read: mariadb-proton-mariadb.resource.svc.cluster.local
+      port: 3306
+      port_read: 3306
+      source_type: internal
+      type: MariaDB
+      user: adp
+      password: "{{ kweaver_rds_password | default('') }}"
+      database: adp
+    redis:
+      connect_type: sentinel
+      source_type: internal
+      connect_info:
+        master_group_name: mymaster
+        password: "{{ kweaver_redis_password | default('') }}"
+        sentinel_host: redis-proton-redis-sentinel.resource.svc.cluster.local
+        sentinel_password: "{{ kweaver_redis_sentinel_password | default('') }}"
+        sentinel_port: 26379
+        sentinel_username: root
+        username: root
+  ingress_class: class-443
+
+kweaver_image_overrides:
+  enabled: true
+  rollout_timeout: 300s
+  items:
+    - name: mf-model-api-temporary-image
+      enabled: true
+      namespace: "{{ kweaver.namespace }}"
+      deployment: mf-model-api
+      container: mf-model-api
+      image: swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/mf-model-api:0.6.0
+
+kweaver_runtime:
+  alias_name: kweaver-runtime
+  alias_namespace: "{{ deployment_namespace }}"
+  scheme: http
+  path: ""
+  service_name: ""
+  service_namespace: "{{ kweaver.namespace }}"
+  service_port: 0
+  service_candidates:
+    - deploy-web
+    - studio-web
+    - agent-web
+    - agent-backend
+
+sandbox:
+  template_id: python-basic
+  metadata_database: adp
+  base_image: "{{ sandbox_base_image | default('') }}"
+  restart_namespace: "{{ kweaver.namespace }}"
+  restart_selector: app=sandbox-executor,template_id=python-basic
+  require_non_always_pull_policy: true
+
+verify:
+  timeout: 600s
+  core_agent_log_tail: 200
+  core_agent_mq_ready_pattern: "{{ core_agent_mq_ready_pattern | default('') }}"
+
+v9_redis_url: ""
+v9_opensearch_url: ""
+
+sandbox_base_image: ""
+sandbox_overlay_enabled: true
+sandbox_overlay_dry_run: false
+sandbox_overlay_restart_pods: true
+
+kweaver_internal_base_url: "http://{{ ingress.managed_nodeport.controller_service_name }}.{{ ingress.managed_nodeport.controller_namespace }}.svc.cluster.local:80"
+kweaver_runtime_base_url: ""
+
+agent_content:
+  enabled: true
+  env: alpha
+  package_dir: "{{ package_root }}/agent-content"
+  remote_root: "{{ remote_deploy_root }}/agent-content"
+  business_domain: "{{ agent_content_business_domain | default('bd_public') }}"
+  skip_login: "{{ agent_content_skip_login | default(true) }}"
+  kweaver_base_url: "{{ agent_content_kweaver_base_url | default('') }}"
+  kweaver_username: "{{ agent_content_kweaver_username | default('') }}"
+  kweaver_password: "{{ agent_content_kweaver_password | default('') }}"
+  kweaver_insecure: "{{ agent_content_kweaver_insecure | default(true) }}"
+  required_commands:
+    - python3
+    - kweaver
+    - kubectl
+    - curl
+  deploy_backup_rule_knowledge: "{{ agent_content_deploy_backup_rule_knowledge | default(true) }}"
+  backup_rule_knowledge:
+    namespace: "{{ agent_content_backup_rule_knowledge_namespace | default(v9_infra.namespace) }}"
+    pod: "{{ agent_content_backup_rule_knowledge_pod | default('v9-infra-postgres-0') }}"
+    database: "{{ agent_content_backup_rule_knowledge_database | default('backup_rule_knowledge') }}"
+    username: "{{ agent_content_backup_rule_knowledge_username | default(v9_postgres_username) }}"
+    schema: "{{ agent_content_backup_rule_knowledge_schema | default('backup_rule_knowledge') }}"
+    min_table_count: "{{ agent_content_backup_rule_knowledge_min_table_count | default(13) }}"
+  deploy_backup_vega: "{{ agent_content_deploy_backup_vega | default(true) }}"
+  backup_vega:
+    engine: "{{ agent_content_backup_vega_engine | default('postgresql') }}"
+    host: "{{ agent_content_backup_vega_host | default(v9_infra.postgres.service_name ~ '.' ~ v9_infra.namespace ~ '.svc.cluster.local') }}"
+    port: "{{ agent_content_backup_vega_port | default(5432) }}"
+    database: "{{ agent_content_backup_vega_database | default(agent_content_backup_rule_knowledge_database | default('backup_rule_knowledge')) }}"
+    schema: "{{ agent_content_backup_vega_schema | default(agent_content_backup_rule_knowledge_schema | default('backup_rule_knowledge')) }}"
+    username: "{{ agent_content_backup_vega_username | default(v9_postgres_username) }}"
+    password: "{{ agent_content_backup_vega_password | default(v9_postgres_password) }}"
+    catalog_name: "{{ agent_content_backup_vega_catalog_name | default('backup_rule_knowledge') }}"
+    discover: "{{ agent_content_backup_vega_discover | default(true) }}"
+  deploy_backup_bkns: "{{ agent_content_deploy_backup_bkns | default(true) }}"
+  deploy_recovery_vega: "{{ agent_content_deploy_recovery_vega | default(true) }}"
+  deploy_recovery_bkns: "{{ agent_content_deploy_recovery_bkns | default(true) }}"
+  deploy_contextloader: "{{ agent_content_deploy_contextloader | default(true) }}"
+  deploy_foundation_cli_skills: "{{ agent_content_deploy_foundation_cli_skills | default(true) }}"
+  deploy_recovery_agent: "{{ agent_content_deploy_recovery_agent | default(true) }}"
+  publish_agents: "{{ agent_content_publish_agents | default(true) }}"
+  contextloader_skill_name: "{{ agent_content_contextloader_skill_name | default('contextloader工具集') }}"
+  contextloader:
+    base_url: "{{ agent_content_contextloader_base_url | default((agent_content_kweaver_base_url | default('', true)) or (kweaver_cli_effective_base_url | default('', true)) or (kweaver_cli_base_url | default('', true)) or (public_base_url | default('', true)), true) }}"
+    toolbox_files: "{{ agent_content_contextloader_toolbox_files | default([remote_deploy_root ~ '/agent-content/anybackup-agent/context-loader/toolset/context_loader_toolset.adp', remote_deploy_root ~ '/agent-content/anybackup-agent/context-loader/tool-deps/execution_factory_tools.adp']) }}"
+    import_mode: "{{ agent_content_contextloader_import_mode | default('upsert') }}"
+    skip_verify: "{{ agent_content_contextloader_skip_verify | default(false) }}"
+  foundation_cli_skills:
+    base_url: "{{ agent_content_foundation_cli_skills_base_url | default((agent_content_contextloader_base_url | default('', true)) or (kweaver_cli_effective_base_url | default('', true)) or (kweaver_cli_base_url | default('', true)) or (public_base_url | default('', true)), true) }}"
+    skills_root: "{{ agent_content_foundation_cli_skills_root | default(remote_deploy_root ~ '/agent-content/anybackup-agent/foundation-cli-skills/skills') }}"
+    skill_dirs: "{{ agent_content_foundation_cli_skill_dirs | default([
+      remote_deploy_root ~ '/agent-content/anybackup-agent/foundation-cli-skills/skills/client',
+      remote_deploy_root ~ '/agent-content/anybackup-agent/foundation-cli-skills/skills/job',
+      remote_deploy_root ~ '/agent-content/anybackup-agent/foundation-cli-skills/skills/mysql',
+      remote_deploy_root ~ '/agent-content/anybackup-agent/foundation-cli-skills/skills/policy',
+      remote_deploy_root ~ '/agent-content/anybackup-agent/foundation-cli-skills/skills/protect',
+      remote_deploy_root ~ '/agent-content/anybackup-agent/foundation-cli-skills/skills/storage',
+      remote_deploy_root ~ '/agent-content/anybackup-agent/foundation-cli-skills/skills/timepoint'
+    ]) }}"
+    source: "{{ agent_content_foundation_cli_skills_source | default('custom') }}"
+    publish: "{{ agent_content_foundation_cli_skills_publish | default(true) }}"
+    ensure_publish_schema: "{{ agent_content_foundation_cli_skills_ensure_publish_schema | default(true) }}"
+    kweaver_config_path: "{{ agent_content_foundation_cli_skills_kweaver_config_path | default(kweaver.config_path) }}"
+    resource_namespace: "{{ agent_content_foundation_cli_skills_resource_namespace | default(kweaver.resource_namespace) }}"
+    state_file: "{{ agent_content_foundation_cli_skills_state_file | default(artifacts_root ~ '/anybackup-foundation-cli-skills.json') }}"
+  vega:
+    engine: "{{ agent_content_vega_engine | default('postgresql') }}"
+    host: "{{ agent_content_vega_host | default(v9_infra.postgres.service_name ~ '.' ~ v9_infra.namespace ~ '.svc.cluster.local') }}"
+    port: "{{ agent_content_vega_port | default(5432) }}"
+    database: "{{ agent_content_vega_database | default('ExperienceBKNDB') }}"
+    username: "{{ agent_content_vega_username | default(v9_postgres_username) }}"
+    password: "{{ agent_content_vega_password | default(v9_postgres_password) }}"
+    schema: "{{ agent_content_vega_schema | default('public') }}"
+    namespace: "{{ agent_content_vega_namespace | default(v9_infra.namespace) }}"
+    pod: "{{ agent_content_vega_pod | default('v9-infra-postgres-0') }}"
+    postgres_username: "{{ agent_content_vega_postgres_username | default(v9_postgres_username) }}"
+    import_mode: "{{ agent_content_vega_import_mode | default('kubectl') }}"
+  foundation_vega:
+    enabled: "{{ agent_content_foundation_vega_enabled | default(false) }}"
+    engine: "{{ agent_content_foundation_vega_engine | default('mariadb') }}"
+    host: "{{ agent_content_foundation_vega_host | default((foundation.access_host | default('', true)) or (foundation.self_ip | default('', true)) or (ansible_default_ipv4.address | default('127.0.0.1')), true) }}"
+    port: "{{ agent_content_foundation_vega_port | default(9602) }}"
+    username: "{{ agent_content_foundation_vega_username | default('v9agent2') }}"
+    password: "{{ agent_content_foundation_vega_password | default('') }}"
+    schema: "{{ agent_content_foundation_vega_schema | default('') }}"
+
+core_agent_service_token: dev-core-agent-token
+auth_service_admin_password: CHANGE_ME
+
+core_agent_mq_ready_pattern: ""

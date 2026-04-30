@@ -1,0 +1,45 @@
+---
+type: action_type
+id: query_protected_object_backup_config
+name: 查询保护对象备份配置
+tags: [保护对象, 备份配置, 配置查询]
+action_type: add
+---
+
+## ActionType: 查询保护对象备份配置
+
+根据保护对象名称查询该保护对象的备份配置，并直接返回当前已生效的“备份方案内容”。输出口径应与 `backup_new_knowledge` 中的 `backup_solution`、`basic_config`、`app_config` 保持一致：优先输出可读的方案摘要、基础配置和应用配置，而不是仅返回底层配置行。
+
+结果中的展示标签应优先使用各对象 `Data Properties` 中定义的 `Display Name`，而不直接使用字段名；例如 `client_name` 应显示为“客户端名称”。最终结果不应显示任何来源说明。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| protected_object |
+
+### Affect Object
+
+| Affect Object | Affect Description |
+|---------------|--------------------|
+| backup_config | 返回保护对象公共配置，并参与构造 `basic_config` |
+
+### Trigger Condition
+
+
+### Action Source
+
+| Type | BoxID | ToolID | McpID | ToolName |
+|------|-------|--------|-------|----------|
+
+### Parameter Binding
+
+| Name | Type | Source | Operation | ValueFrom | Value | Description |
+|------|------|--------|-----------|-----------|-------|-------------|
+| protected_object_name | string | input |  |  |  | 保护对象名称 |
+
+### Schedule
+
+| Type | Expression |
+|------|------------|
+| EVENT | on_request |

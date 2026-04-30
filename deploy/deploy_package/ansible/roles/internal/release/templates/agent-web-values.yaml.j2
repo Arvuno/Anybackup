@@ -1,0 +1,26 @@
+replicaCount: 2
+
+nameOverride: agent-web
+fullnameOverride: agent-web
+
+image:
+  repository: agent-web
+  tag: "{{ v9_services_image_tag }}"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  nodePort: null
+
+authService:
+  upstream: "http://api-gateway-service-traefik.{{ deployment_namespace }}.svc.cluster.local"
+
+conversationService:
+  upstream: "http://api-gateway-service-traefik.{{ deployment_namespace }}.svc.cluster.local"
+
+ingress:
+  enabled: false
+
+probes:
+  path: /healthz

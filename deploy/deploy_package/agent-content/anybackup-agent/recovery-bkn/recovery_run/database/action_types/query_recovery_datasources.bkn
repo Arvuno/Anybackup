@@ -1,0 +1,55 @@
+---
+type: action_type
+action_type: add
+id: query_recovery_datasources
+name: 查询恢复数据源列表
+tags: [恢复数据源, 查询, Foundation]
+enabled: true
+risk_level: low
+requires_approval: false
+---
+
+## ActionType: 查询恢复数据源列表
+
+查询指定时间点副本下的恢复数据源列表。业务语义上，该动作面向“已选定时间点副本”的恢复数据源查询；当前底层工具实现需要提供存储服务ID、数据集ID和时间戳作为参数。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| recovery_datasource |
+
+### Pre-conditions
+
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| storage_service | exist | true | 存储服务必须存在 |
+| storage_service | property:storageServiceId | valid | storageServiceId 必须是有效的存储服务ID |
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| recovery_datasource | 仅查询操作，不影响数据 |
+| storage_service | 仅查询操作，不影响数据 |
+
+### Tool Configuration
+
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | foundation_toolbox | query_recovery_datasources |
+
+### Parameter Binding
+
+| Name | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| storageServiceId | string | input | - | 当前工具实现所需的存储服务ID（必填） |
+| dataSetId | string | input | - | 当前工具实现所需的数据集ID（必填） |
+| timestamp | integer | input | - | 当前工具实现所需的时间戳（必填） |
+
+### Execution Description
+
+1. 接收参数
+2. 验证参数 - 检查 storageServiceId 是否存在、是否有效；检查 dataSetId 是否存在、是否有效；检查 timestamp 是否有效
+3. 调用 Foundation 工具
+4. 返回结果 - 返回恢复数据源列表，包含：recovery_datasourceId, display, fullPath, metadata, objectSize, timePointId

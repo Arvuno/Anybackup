@@ -1,0 +1,634 @@
+@import "github-markdown-css/github-markdown-light.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ─── Core: Light & Airy ─── */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+    --primary: 205 90% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 25% 95%;
+    --secondary-foreground: 215 25% 20%;
+    --muted: 210 20% 95%;
+    --muted-foreground: 215 12% 50%;
+    --accent: 205 80% 96%;
+    --accent-foreground: 205 90% 38%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-surface: 0 75% 95%;
+    --border: 210 18% 91%;
+    --input: 210 18% 91%;
+    --ring: 205 90% 52%;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+    --radius: 0.625rem;
+
+    /* ─── AI Branding ─── */
+    --ai: 205 90% 52%;
+    --ai-glow: 205 90% 65%;
+    --ai-surface: 205 80% 96%;
+    --ai-purple: 250 65% 58%;
+
+    /* ─── Status ─── */
+    --success: 150 70% 42%;
+    --success-fg: 0 0% 100%;
+    --success-surface: 150 55% 95%;
+    --warning: 35 90% 50%;
+    --warning-fg: 0 0% 100%;
+    --warning-surface: 35 80% 95%;
+
+    /* ─── Sidebar ─── */
+    --sidebar: 210 20% 97%;
+
+    /* ─── Category Colors ─── */
+    --cat-foundation: 185 65% 48%;
+    --cat-database: 205 90% 52%;
+    --cat-virtualization: 250 65% 58%;
+    --cat-filesystem: 150 70% 42%;
+    --cat-application: 35 90% 50%;
+    --cat-os: 215 12% 60%;
+
+    /* ─── Gradients ─── */
+    --gradient-ai: linear-gradient(135deg, hsl(205 90% 52%), hsl(250 65% 58%));
+    --gradient-ai-subtle: linear-gradient(135deg, hsl(205 80% 97%), hsl(250 60% 97%));
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 20% 98%));
+    --gradient-hero: radial-gradient(ellipse at 30% 20%, hsl(205 90% 52% / 0.06) 0%, transparent 50%),
+                     radial-gradient(ellipse at 70% 80%, hsl(250 65% 58% / 0.04) 0%, transparent 50%);
+
+    /* ─── Shadows (Doc 26 §3.5) ─── */
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.03);
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+    --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -1px rgb(0 0 0 / 0.04);
+    --shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.12), 0 4px 8px -2px rgb(0 0 0 / 0.06);
+    --shadow-xl: 0 24px 56px -12px rgb(0 0 0 / 0.16), 0 8px 16px -4px rgb(0 0 0 / 0.08);
+    --shadow-modal: 0 8px 40px -8px rgb(0 0 0 / 0.1), 0 4px 12px -4px rgb(0 0 0 / 0.04);
+    --shadow-ai: 0 4px 16px -4px hsl(205 90% 52% / 0.18);
+    --shadow-ai-lg: 0 8px 32px -8px hsl(205 90% 52% / 0.25);
+    --shadow-card: 0 1px 3px rgb(0 0 0 / 0.04), 0 0 0 1px rgb(0 0 0 / 0.015);
+    --shadow-card-hover: 0 4px 16px rgb(0 0 0 / 0.06), 0 0 0 1px rgb(0 0 0 / 0.02);
+
+    /* ─── Motion (Doc 27 §10.2) ─── */
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+
+    /* ─── AI Ambient (Doc 27 §2) ─── */
+    --ambient-hue: 220;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+      'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  ::selection {
+    background: hsl(var(--ai) / 0.15);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  /* ─── Scrollbar ─── */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.12) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 5px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.12);
+    border-radius: 999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.2);
+  }
+
+  /* ─── Scrollbar: Left Sidebar (4px right offset) ─── */
+  .scrollbar-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.12) transparent;
+  }
+  .scrollbar-sidebar::-webkit-scrollbar { width: 9px; }
+  .scrollbar-sidebar::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-sidebar::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.12);
+    border-radius: 999px;
+    border-right: 4px solid transparent;
+    background-clip: padding-box;
+  }
+  .scrollbar-sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.2);
+  }
+
+  /* ─── Gradients ─── */
+  .bg-gradient-ai { background: var(--gradient-ai); }
+  .bg-gradient-ai-subtle { background: var(--gradient-ai-subtle); }
+  .bg-gradient-hero { background: var(--gradient-hero); }
+
+  /* ─── Shadows ─── */
+  .shadow-ai { box-shadow: var(--shadow-ai); }
+  .shadow-ai-lg { box-shadow: var(--shadow-ai-lg); }
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+  .shadow-modal { box-shadow: var(--shadow-modal); }
+
+  /* ─── Status Dots ─── */
+  .status-dot { @apply w-2 h-2 rounded-full shrink-0; }
+  .status-online { @apply status-dot; background: hsl(var(--success)); box-shadow: 0 0 6px hsl(var(--success) / 0.4); }
+  .status-warning { @apply status-dot; background: hsl(var(--warning)); box-shadow: 0 0 6px hsl(var(--warning) / 0.4); }
+  .status-error { @apply status-dot; background: hsl(var(--destructive)); box-shadow: 0 0 6px hsl(var(--destructive) / 0.4); }
+  .status-pending { @apply status-dot; background: hsl(var(--muted-foreground) / 0.3); }
+
+  /* ─── Transitions ─── */
+  .transition-smooth { transition: all 0.25s var(--ease); }
+  .transition-fast { transition: all 0.15s var(--ease); }
+  .transition-spring { transition: all 0.35s var(--ease-spring); }
+
+  /* ─── Glass ─── */
+  .glass {
+    background: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  }
+
+  /* ─── Text Shimmer ─── */
+  .text-shimmer {
+    background: var(--gradient-ai);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── Hover Lift (Doc 26 §6.2) ─── */
+  .hover-lift {
+    transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .hover-lift:active {
+    transform: translateY(0);
+  }
+
+  /* ─── Click Scale (Doc 26 §6.1) ─── */
+  .click-scale {
+    transition: transform 0.15s var(--ease), box-shadow 0.2s var(--ease);
+  }
+  .click-scale:hover {
+    transform: translateY(-1px);
+  }
+  .click-scale:active {
+    transform: scale(0.98);
+  }
+
+  /* ─── Chat Bubble Radius (Doc 26 §5.4) ─── */
+  .bubble-ai {
+    border-radius: 16px 16px 16px 4px;
+  }
+  .bubble-user {
+    border-radius: 16px 16px 4px 16px;
+  }
+
+  /* ─── Input Focus (Doc 26 §5.2) ─── */
+  .input-focus {
+    transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  }
+  .input-focus:focus {
+    border-color: hsl(var(--ai));
+    box-shadow: 0 0 0 3px hsl(var(--ai) / 0.12);
+    outline: none;
+  }
+
+  /* ─── Confidence Badge (Doc 26 §5.5) ─── */
+  .badge-high { @apply text-success bg-success-surface; }
+  .badge-medium { @apply text-ai bg-ai-surface; }
+  .badge-low { @apply text-warning bg-warning-surface; }
+
+  /* ─── Card Base: 静态克制 → 交互绽放 (Doc 27 §3.1) ─── */
+  .card-quiet {
+    border-width: 1px;
+    border-style: solid;
+    border-color: hsl(var(--border) / 0.35);
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.28s var(--ease), box-shadow 0.28s var(--ease), transform 0.28s var(--ease);
+  }
+  .card-quiet:hover {
+    border-color: hsl(var(--border) / 0.6);
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-1px);
+  }
+  .card-quiet:active {
+    transform: translateY(0);
+  }
+
+  /* ─── Dynamic Avatar streaming state ─── */
+  .ai-avatar-dynamic.streaming {
+    animation-duration: 4s;
+    filter: brightness(1.1);
+  }
+
+  /* ─── Focus visible (Doc 26 Accessibility) ─── */
+  .focus-ring:focus-visible {
+    outline: 2px solid hsl(var(--ai));
+    outline-offset: 2px;
+  }
+}
+
+/* ─── Keyframes ─── */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes typing-dot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+@keyframes pulse-ai {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(205 90% 52% / 0.3); }
+  50% { box-shadow: 0 0 0 6px hsl(205 90% 52% / 0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+@keyframes countdown-bar {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes blink-status {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%) scaleX(0.5); }
+  50% { transform: translateX(0%) scaleX(0.3); }
+  100% { transform: translateX(100%) scaleX(0.5); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-fade-in-up { animation: fade-in-up 0.4s var(--ease) both; }
+.animate-fade-in { animation: fade-in 0.3s var(--ease) both; }
+.animate-fade-in-scale { animation: fade-in-scale 0.35s var(--ease) both; }
+.animate-slide-in-right { animation: slide-in-right 0.35s var(--ease) both; }
+.animate-slide-in-left { animation: slide-in-left 0.35s var(--ease) both; }
+.animate-pulse-ai { animation: pulse-ai 2s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-shimmer { animation: shimmer 2s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 8s linear infinite; }
+.animate-blink { animation: blink-status 1.2s ease-in-out infinite; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+
+/* ─── Donut Chart ─── */
+.donut-segment {
+  transition: stroke-dasharray 1s var(--ease), stroke-dashoffset 1s var(--ease);
+}
+
+/* ─── Stagger animation delays ─── */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+
+/* ═══════════════════════════════════════════
+   Doc 27 - AI 环境光系统 (§2)
+   ═══════════════════════════════════════════ */
+.ai-ambient-idle {
+  position: relative;
+}
+.ai-ambient-idle::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 120px;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(59, 130, 246, 0.04) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ai-ambient-thinking::before {
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(99, 102, 241, 0.08) 0%,
+    transparent 70%
+  );
+  animation: ambient-breathe 3s ease-in-out infinite;
+}
+
+.ai-ambient-streaming::before {
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(59, 130, 246, 0.06) 0%,
+    transparent 70%
+  );
+  animation: ambient-pulse-light 1.5s ease-in-out infinite;
+}
+
+@keyframes ambient-breathe {
+  0%, 100% { opacity: 0.4; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+}
+
+@keyframes ambient-pulse-light {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ─── AI Ambient: Success (§2.4 方案通过 / 任务完成) ─── */
+.ai-ambient-success {
+  position: relative;
+}
+.ai-ambient-success::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 120px;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    hsl(var(--success) / 0.1) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: ambient-success-bloom 1.5s ease-out forwards;
+}
+@keyframes ambient-success-bloom {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+  40% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+  100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+}
+
+/* ─── AI Ambient: Warning (§2.5 告警事件) ─── */
+.ai-ambient-warning {
+  position: relative;
+}
+.ai-ambient-warning::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 100px;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    hsl(var(--warning) / 0.06) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: ambient-warning-pulse 2s ease-in-out infinite;
+}
+@keyframes ambient-warning-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* ─── AI Ambient: Error ─── */
+.ai-ambient-error {
+  position: relative;
+}
+.ai-ambient-error::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 100px;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    hsl(var(--destructive) / 0.06) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: ambient-warning-pulse 1.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   Doc 27 - AI 思考波形指示器 (§8.2)
+   ═══════════════════════════════════════════ */
+@keyframes wave {
+  0%, 100% { height: 4px; opacity: 0.4; }
+  50% { height: 16px; opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════
+   Doc 27 - 消息气泡入场动效 (§8.1)
+   ═══════════════════════════════════════════ */
+@keyframes bubble-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes bubble-enter-right {
+  from { opacity: 0; transform: translateX(8px) scale(0.96); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ═══════════════════════════════════════════
+   Doc 27 - 流式文字浮现 (§4.1)
+   ═══════════════════════════════════════════ */
+@keyframes word-emerge {
+  from { opacity: 0; filter: blur(4px); transform: translateY(4px); }
+  to { opacity: 1; filter: blur(0); transform: translateY(0); }
+}
+
+.ai-text-stream {
+  animation: word-emerge 0.3s ease-out both;
+}
+
+.markdown-rich-content .markdown-body {
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background-color: transparent;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.markdown-rich-content .markdown-body > :first-child {
+  margin-top: 0 !important;
+}
+
+.markdown-rich-content .markdown-body > :last-child {
+  margin-bottom: 0 !important;
+}
+
+/* ═══════════════════════════════════════════
+   Doc 27 - 空间纵深系统 (§5.3)
+   ═══════════════════════════════════════════ */
+.content-defocused {
+  filter: blur(2px);
+  transform: scale(0.99);
+  opacity: 0.7;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.content-focused {
+  filter: blur(0);
+  transform: scale(1);
+  opacity: 1;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ═══════════════════════════════════════════
+   Doc 27 - AI 动态头像 (§11.1)
+   ═══════════════════════════════════════════ */
+.ai-avatar-dynamic {
+  background: conic-gradient(
+    from 0deg,
+    hsl(var(--ai)),
+    hsl(var(--ai-purple)),
+    hsl(var(--ai))
+  );
+  animation: avatar-rotate 8s linear infinite;
+}
+
+.ai-avatar-dynamic.thinking {
+  animation-duration: 2s;
+}
+
+@keyframes avatar-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════
+   Doc 27 - 思维链可视化 (§6)
+   ═══════════════════════════════════════════ */
+
+/* 深度思考容器 — 参考图样式 */
+.thinking-block {
+  border-radius: 12px;
+  background: hsl(var(--muted) / 0.45);
+  overflow: hidden;
+}
+
+.thinking-block-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s;
+}
+
+.thinking-block-header:hover {
+  opacity: 0.75;
+}
+
+.thinking-block-content {
+  padding: 0 14px 14px;
+  font-size: 13px;
+  line-height: 1.85;
+  color: hsl(var(--muted-foreground));
+}
+
+.thinking-block-content p {
+  margin-bottom: 10px;
+}
+
+.thinking-block-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* 思考中打字光标 */
+.thinking-cursor-inline {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: hsl(var(--muted-foreground) / 0.5);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: typing-cursor 0.8s ease-in-out infinite;
+}
+
+@keyframes typing-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════
+   Doc 27 - prefers-reduced-motion (§13.2)
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .ai-ambient-thinking::before,
+  .ai-ambient-streaming::before,
+  .ai-ambient-success::before,
+  .ai-ambient-warning::before,
+  .ai-ambient-error::before {
+    animation: none;
+    opacity: 0.5;
+  }
+  .ai-avatar-dynamic {
+    animation: none;
+  }
+}

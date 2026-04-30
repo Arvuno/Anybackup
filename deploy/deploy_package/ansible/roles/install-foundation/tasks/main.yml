@@ -1,0 +1,7 @@
+---
+- name: Install or verify Foundation
+  ansible.builtin.include_role:
+    name: internal/foundation_install
+  when:
+    - deployment_profile == "full"
+    - foundation.enabled | default(true) | bool

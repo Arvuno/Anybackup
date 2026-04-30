@@ -1,0 +1,37 @@
+---
+type: object_type
+id: basic_config_rule
+name: 基础配置
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 基础配置
+
+用于表达基础配置规则项。每条记录只表达一个基础配置类别，例如备份存储、数据压缩、备份失败重试、强制数据保留、重复数据删除、传输加密等。推荐阶段需按 `config_category` 汇总，并保证同一候选方案的最终基础配置结果中，同一配置类别只出现一次。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | ebfcaa18-3f26-4c1b-9790-8cb52bb9e19b | basic_config_rule |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 配置规则ID | string | 配置规则唯一标识。 | id |
+| app_object_type | 应用类型 | string | 规则适用的应用类型，可为单个类型或多个类型集合。 | app_object_type |
+| condition | 附加匹配条件 | string | 除 `app_object_type` 外的附加匹配条件表达式，例如 `data_size_gb >= 500G`。 | condition |
+| condition_description | 条件描述 | string | 对条件的中文解释。 | condition_description |
+| config_category | 配置类别 | string | 基础配置类别，例如 `basic.backuptarget`、`basic.compress`、`basic.retry`、`basic.forcedretention`、`basic.deduplication`、`basic.transportencryption`。 | config_category |
+| config | 配置内容 | text | 命中规则后应采用的配置内容摘要。 | config |
+| config_param | 配置参数 | string | 同一配置类别下的参数列表，使用分号分隔，每项采用 `param=value` 形式。 | config_param |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: id
+Incremental Key:

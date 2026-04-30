@@ -1,0 +1,16 @@
+project: anybackup-agent-content
+env: "{{ agent_content.env }}"
+
+globals:
+  business_domain: "{{ agent_content.business_domain }}"
+
+bkns:
+  - name: 备份规则知识网络
+    source: "{{ agent_content.remote_root }}/anybackup-agent/backup/backup_rule_knowledge_network"
+    validate: true
+    branch: main
+
+  - name: 备份运行知识网络
+    source: "{{ agent_content.remote_root }}/anybackup-agent/backup/backup_run_knowledge_network"
+    validate: true
+    branch: main

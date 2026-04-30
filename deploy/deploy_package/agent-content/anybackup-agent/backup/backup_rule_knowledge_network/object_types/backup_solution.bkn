@@ -1,0 +1,43 @@
+---
+type: object_type
+id: backup_solution
+name: 备份方案
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 备份方案
+
+作为推荐结果的中心对象，用于统一承载多个备份窗口、多个备份计划和一个数据保留计划。基础配置与应用配置不再以单个模板对象直连，而是在推荐阶段基于方案上下文匹配并汇总多条配置规则项。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | backup_solution | backup_solution |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 方案ID | string | 备份方案唯一标识。 | id |
+| name | 方案名称 | string | 备份方案名称。 | name |
+| app_object_type | 应用类型 | string | 适用应用类型，例如 mysql、oracle、file。 | app_object_type |
+| data_level | 数据分级属性 | string | 适用的数据分级属性。 | data_level |
+| industry_type | 行业类型 | string | 适用行业类型，如金融、政府、能源、未定义。 | industry_type |
+| target_rpo_minutes | 目标RPO分钟 | integer | 方案目标RPO，单位分钟。 | target_rpo_minutes |
+| target_rto_minutes | 目标RTO分钟 | integer | 方案目标RTO，单位分钟。 | target_rto_minutes |
+| source_app_rule_id | 来源应用规则ID | string | 当前方案主要来源的应用规则 ID，仅用于内部追踪和审计，不作为 action 对外输出字段。 | source_app_rule_id |
+| source_data_type | 来源数据规则键 | string | 当前方案主要来源的数据规则键，映射 `data_rule.data_type`，仅用于内部追踪和审计，不作为 action 对外输出字段。 | source_data_type |
+| source_legal_rule_id | 来源法规规则ID | string | 当前方案主要来源的法规规则 ID，仅用于内部追踪和审计，不作为 action 对外输出字段。 | source_legal_rule_id |
+| source_rpo_rule_id | 来源RPO规则ID | string | 当前方案主要来源的 RPO 规则 ID，仅用于内部追踪和审计，不作为 action 对外输出字段。 | source_rpo_rule_id |
+| description | 说明 | text | 备份方案说明。 | description |
+| priority | 优先级 | integer | 数值越小优先级越高。 | priority |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

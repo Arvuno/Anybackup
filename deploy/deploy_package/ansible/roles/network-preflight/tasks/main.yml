@@ -1,0 +1,4 @@
+---
+- name: Run network preflight checks
+  ansible.builtin.include_role:
+    name: internal/network_preflight

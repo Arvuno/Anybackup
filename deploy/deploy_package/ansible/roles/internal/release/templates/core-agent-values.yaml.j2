@@ -1,0 +1,31 @@
+namespace: {{ deployment_namespace }}
+image: "{{ ((core_agent_service.image_registry | default(v9_services_image_registry)) | length > 0) | ternary((core_agent_service.image_registry | default(v9_services_image_registry)) ~ '/', '') }}{{ core_agent_service.name }}:{{ core_agent_service.image_tag }}"
+imagePullPolicy: IfNotPresent
+replicas: {{ core_agent_service.replicas }}
+port: {{ core_agent_service.container_port }}
+servicePort: {{ core_agent_service.service_port }}
+postgres:
+  urlSecretRef:
+    name: {{ core_agent_service.postgres.urlSecretRef.name }}
+    key: {{ core_agent_service.postgres.urlSecretRef.key }}
+rabbitmq:
+  urlSecretRef:
+    name: {{ core_agent_service.rabbitmq.urlSecretRef.name }}
+    key: {{ core_agent_service.rabbitmq.urlSecretRef.key }}
+redis:
+  urlSecretRef:
+    name: {{ core_agent_service.redis.urlSecretRef.name }}
+    key: {{ core_agent_service.redis.urlSecretRef.key }}
+opensearch:
+  urlSecretRef:
+    name: {{ core_agent_service.opensearch.urlSecretRef.name }}
+    key: {{ core_agent_service.opensearch.urlSecretRef.key }}
+kweaver:
+  baseUrl: {{ (effective_kweaver_runtime_base_url | default(kweaver_internal_base_url | default(kweaver_runtime_base_url | default('')), true)) | quote }}
+  tokenSecretRef:
+    name: {{ core_agent_service.kweaver.tokenSecretRef.name }}
+    key: {{ core_agent_service.kweaver.tokenSecretRef.key }}
+presetAgents:
+{{ core_agent_preset_agents | to_nice_yaml(indent=2) | indent(2, true) }}
+extraEnv:
+{{ core_agent_service.extraEnv | default([]) | to_nice_yaml(indent=2) | indent(2, true) }}

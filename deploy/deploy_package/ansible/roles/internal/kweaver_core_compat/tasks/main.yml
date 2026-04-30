@@ -1,0 +1,168 @@
+---
+- name: Read live KWeaver config for compatibility services
+  ansible.builtin.slurp:
+    src: "{{ kweaver.config_path }}"
+  register: kweaver_core_compat_config_raw
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+
+- name: Parse live KWeaver config for compatibility services
+  ansible.builtin.set_fact:
+    kweaver_core_compat_config: "{{ kweaver_core_compat_config_raw.content | b64decode | from_yaml }}"
+    kweaver_core_compat_effective_host: >-
+      {{
+        (kweaver_core_compat.deploy_web.access_address.host | default('', true))
+        or (((kweaver_core_compat_config_raw.content | b64decode | from_yaml).accessAddress | default({})).host | default(''))
+        or (ansible_host | default(''))
+        or ((ansible_default_ipv4.address) if (ansible_default_ipv4 is defined and ansible_default_ipv4.address is defined) else '')
+      }}
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+
+- name: Check deploy-web compatibility service
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - get
+      - service
+      - "{{ kweaver_core_compat.deploy_web.service_name }}"
+      - -n
+      - "{{ kweaver.namespace }}"
+  register: kweaver_core_compat_deploy_web_service_check
+  changed_when: false
+  failed_when: false
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+
+- name: Check deploy-web compatibility deployment readiness
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - get
+      - deployment
+      - "{{ kweaver_core_compat.deploy_web.release_name }}"
+      - -n
+      - "{{ kweaver.namespace }}"
+      - -o
+      - jsonpath={.status.readyReplicas}
+  register: kweaver_core_compat_deploy_web_ready_check
+  changed_when: false
+  failed_when: false
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+
+- name: Resolve deploy-web compatibility status
+  ansible.builtin.set_fact:
+    kweaver_core_compat_deploy_web_ready: >-
+      {{
+        (kweaver_core_compat_deploy_web_service_check.rc | default(1)) == 0
+        and ((kweaver_core_compat_deploy_web_ready_check.stdout | default('0') | trim | int) > 0)
+      }}
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+
+- name: Render deploy-web compatibility values
+  ansible.builtin.template:
+    src: deploy-web-values.yaml.j2
+    dest: "{{ generated_root }}/deploy-web-compat-values.yaml"
+    mode: "0600"
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+    - not (kweaver_core_compat_deploy_web_ready | default(false) | bool)
+
+- name: Ensure deploy-web chart repo is configured
+  ansible.builtin.command:
+    argv:
+      - helm
+      - repo
+      - add
+      - "{{ kweaver_core_compat.deploy_web.repo_name }}"
+      - "{{ kweaver_core_compat.deploy_web.repo_url }}"
+      - --force-update
+  register: kweaver_core_compat_repo_add
+  changed_when: >-
+    'has been added' in (kweaver_core_compat_repo_add.stdout | default(''))
+    or 'updated' in (kweaver_core_compat_repo_add.stdout | default(''))
+    or 'updated' in (kweaver_core_compat_repo_add.stderr | default(''))
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+    - not (kweaver_core_compat_deploy_web_ready | default(false) | bool)
+
+- name: Refresh deploy-web chart repo metadata
+  ansible.builtin.command:
+    argv:
+      - helm
+      - repo
+      - update
+      - "{{ kweaver_core_compat.deploy_web.repo_name }}"
+  changed_when: false
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+    - not (kweaver_core_compat_deploy_web_ready | default(false) | bool)
+
+- name: Render internal-only deploy-web compatibility manifest
+  ansible.builtin.shell: |
+    set -euo pipefail
+    helm template "{{ kweaver_core_compat.deploy_web.release_name }}" "{{ kweaver_core_compat.deploy_web.chart_ref }}" \
+      --version "{{ kweaver_core_compat.deploy_web.chart_version }}" \
+      -n "{{ kweaver.namespace }}" \
+      -f "{{ generated_root }}/deploy-web-compat-values.yaml" \
+    | awk 'BEGIN { RS="---\n"; ORS="---\n" } /kind: Ingress/ { next } { print }' \
+    > "{{ generated_root }}/deploy-web-compat-manifest.yaml"
+  args:
+    executable: /bin/bash
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+    - not (kweaver_core_compat_deploy_web_ready | default(false) | bool)
+
+- name: Apply internal-only deploy-web compatibility manifest
+  ansible.builtin.command: "kubectl apply -f {{ generated_root }}/deploy-web-compat-manifest.yaml"
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+    - not (kweaver_core_compat_deploy_web_ready | default(false) | bool)
+
+- name: Ensure deploy-web compatibility ingress stays absent
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - delete
+      - ingress
+      - "{{ kweaver_core_compat.deploy_web.release_name }}"
+      - -n
+      - "{{ kweaver.namespace }}"
+      - --ignore-not-found=true
+  register: kweaver_core_compat_deploy_web_ingress_delete
+  changed_when: "'deleted' in (kweaver_core_compat_deploy_web_ingress_delete.stdout | default(''))"
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+
+- name: Wait for deploy-web compatibility deployment
+  ansible.builtin.command: >-
+    kubectl rollout status deployment/{{ kweaver_core_compat.deploy_web.release_name }}
+    -n {{ kweaver.namespace }}
+    --timeout={{ kweaver_core_compat.deploy_web.rollout_timeout }}
+  changed_when: false
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool
+
+- name: Print deploy-web compatibility summary
+  ansible.builtin.debug:
+    msg:
+      - "deploy-web compatibility enabled: {{ kweaver_core_compat.deploy_web.enabled }}"
+      - "deploy-web compatibility service: {{ kweaver_core_compat.deploy_web.service_name }}"
+      - "deploy-web compatibility image registry: {{ kweaver_core_compat.deploy_web.image_registry }}"
+  when:
+    - kweaver_core_compat.enabled | default(true) | bool
+    - kweaver_core_compat.deploy_web.enabled | default(true) | bool

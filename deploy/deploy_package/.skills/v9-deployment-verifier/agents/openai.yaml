@@ -1,0 +1,4 @@
+interface:
+  display_name: "V9 Deployment Verifier"
+  short_description: "Verify V9 middleware, KWeaver, and service deployment."
+  default_prompt: "Use this skill to run the repository deployment validator, check Helm and Ansible deployment paths, and report any skipped runtime checks explicitly."

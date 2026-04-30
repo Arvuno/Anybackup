@@ -1,0 +1,107 @@
+---
+- name: Resolve publish network defaults
+  ansible.builtin.set_fact:
+    effective_ingress_class: "{{ effective_ingress_class | default(ingress.class, true) }}"
+    effective_public_base_url: >-
+      {{
+        public_base_url
+        if (public_base_url | default('', true) | length > 0)
+        else (
+          'http://'
+          ~ (
+            ingress.public_node_ip
+            | default('', true)
+            or ansible_default_ipv4.address
+            | default(ansible_host | default('127.0.0.1'))
+          )
+        )
+      }}
+
+- name: Query service contracts in cluster
+  ansible.builtin.command: "kubectl get svc -n {{ item.namespace }} {{ item.resource_name }}"
+  register: network_service_contract_checks
+  changed_when: false
+  failed_when: false
+  loop: "{{ service_contracts }}"
+  loop_control:
+    label: "{{ item.contract_name }}"
+
+- name: Resolve available and missing service contracts
+  ansible.builtin.set_fact:
+    network_available_service_contracts: >-
+      {{
+        network_service_contract_checks.results
+        | selectattr('rc', 'equalto', 0)
+        | map(attribute='item')
+        | list
+      }}
+    network_missing_service_contracts: >-
+      {{
+        network_service_contract_checks.results
+        | rejectattr('rc', 'equalto', 0)
+        | map(attribute='item')
+        | list
+      }}
+    network_public_web_contract: "{{ (service_contracts | selectattr('contract_name', 'equalto', 'web_service') | list | first) | default({}) }}"
+
+- name: Resolve whether web service is present
+  ansible.builtin.set_fact:
+    network_public_web_service_present: >-
+      {{
+        (
+          network_available_service_contracts
+          | selectattr('contract_name', 'equalto', 'web_service')
+          | list
+          | length
+        ) > 0
+      }}
+
+- name: Render V9 public web ingress
+  ansible.builtin.template:
+    src: v9-web-ingress.yaml.j2
+    dest: "{{ generated_root }}/v9-web-ingress.yaml"
+    mode: "0600"
+  when: network_public_web_service_present
+
+- name: Apply V9 public web ingress
+  ansible.builtin.command: "kubectl apply -f {{ generated_root }}/v9-web-ingress.yaml"
+  when: network_public_web_service_present
+
+- name: Render V9 public web Traefik ingress route
+  ansible.builtin.template:
+    src: v9-web-ingressroute.yaml.j2
+    dest: "{{ generated_root }}/v9-web-ingressroute.yaml"
+    mode: "0600"
+  when: network_public_web_service_present
+
+- name: Apply V9 public web Traefik ingress route
+  ansible.builtin.command: "kubectl apply -f {{ generated_root }}/v9-web-ingressroute.yaml"
+  when: network_public_web_service_present
+
+- name: Remove stale V9 public web ingress when web service is absent
+  ansible.builtin.command: "kubectl delete ingress v9-web -n {{ deployment_namespace }} --ignore-not-found=true"
+  changed_when: false
+  when: not network_public_web_service_present
+
+- name: Remove stale V9 public web Traefik ingress route when web service is absent
+  ansible.builtin.command: "kubectl delete ingressroute agent-web -n {{ deployment_namespace }} --ignore-not-found=true"
+  changed_when: false
+  when: not network_public_web_service_present
+
+- name: Write network publish summary
+  ansible.builtin.copy:
+    dest: "{{ generated_root }}/network-summary.txt"
+    mode: "0644"
+    content: |
+      public_base_url={{ effective_public_base_url | default('') }}
+      public_ingress_name={{ 'agent-web' if network_public_web_service_present else '' }}
+      available_contracts={{ network_available_service_contracts | map(attribute='contract_name') | join(',') }}
+      missing_contracts={{ network_missing_service_contracts | map(attribute='contract_name') | join(',') }}
+      kweaver_runtime_base_url={{ effective_kweaver_runtime_base_url | default('') }}
+
+- name: Print network publish summary
+  ansible.builtin.debug:
+    msg:
+      - "Public base URL: {{ effective_public_base_url | default('') }}"
+      - "Web Traefik ingress route published: {{ network_public_web_service_present }}"
+      - "Missing service contracts: {{ (network_missing_service_contracts | map(attribute='contract_name') | list) | join(', ') if (network_missing_service_contracts | length > 0) else 'none' }}"

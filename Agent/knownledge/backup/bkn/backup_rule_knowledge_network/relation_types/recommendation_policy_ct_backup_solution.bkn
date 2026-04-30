@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: recommendation_policy_ct_backup_solution
+name: 候选推荐策略约束方案
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: 候选推荐策略约束方案
+
+通过 `recommendation_policy.industry_type` 与 `backup_solution.industry_type` 建立候选推荐策略到备份方案的显式关系，用于表达某个行业推荐策略主要评估哪些候选方案。该关系负责收敛行业专属方案集合；当未命中行业专属策略或需回退到通用策略时，仍应由推荐 action 继续选择 `industry_type = 未定义` 的默认推荐策略。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| recommendation_policy | backup_solution | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| industry_type | industry_type |

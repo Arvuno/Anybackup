@@ -1,0 +1,79 @@
+---
+- name: Skip packaged business image import during KWeaver core-only validation
+  ansible.builtin.debug:
+    msg:
+      - "deployment_profile=kweaver-core-only: skipping packaged business image import."
+      - "KWeaver Core images are pulled by the upstream online deploy script."
+  when: deployment_profile == "kweaver-core-only"
+
+- name: Discover packaged offline image archives
+  ansible.builtin.find:
+    paths:
+      - "{{ package_root }}/images"
+      - "{{ package_root }}/images/kweaver-core"
+    patterns: "*.tar"
+    recurse: false
+    file_type: file
+  delegate_to: localhost
+  become: false
+  register: packaged_image_archives
+  when: deployment_profile != "kweaver-core-only"
+
+- name: Ensure remote offline image directory exists
+  ansible.builtin.file:
+    path: "{{ artifacts_root }}/images"
+    state: directory
+    mode: "0755"
+  when: deployment_profile != "kweaver-core-only"
+
+- name: Explain when packaged offline images are absent
+  ansible.builtin.debug:
+    msg:
+      - "No image tar archives were found under {{ package_root }}/images."
+      - "KWeaver Core uses the upstream online deploy path; packaged image tars are only needed for business-side images in this workspace."
+  when: (packaged_image_archives.files | default([]) | length) == 0
+    and deployment_profile != "kweaver-core-only"
+
+- name: Copy packaged offline images to remote host
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ artifacts_root }}/images/{{ item.path | basename }}"
+    mode: "0644"
+  loop: "{{ packaged_image_archives.files | default([]) }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  when: (packaged_image_archives.files | default([]) | length) > 0
+    and deployment_profile != "kweaver-core-only"
+
+- name: Detect cluster image import command for packaged images
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if command -v k3s >/dev/null 2>&1; then
+      echo "k3s ctr images import"
+    elif command -v ctr >/dev/null 2>&1; then
+      echo "ctr -n k8s.io images import"
+    else
+      exit 1
+    fi
+  register: load_images_import_command_detect
+  changed_when: false
+  when: image_import_command is not defined
+    and (packaged_image_archives.files | default([]) | length) > 0
+    and deployment_profile != "kweaver-core-only"
+
+- name: Set cluster image import command for packaged images
+  ansible.builtin.set_fact:
+    image_import_command: "{{ load_images_import_command_detect.stdout }}"
+  when: image_import_command is not defined
+    and (packaged_image_archives.files | default([]) | length) > 0
+    and deployment_profile != "kweaver-core-only"
+
+- name: Import packaged offline images into cluster runtime
+  ansible.builtin.shell: |
+    set -euo pipefail
+    {{ image_import_command }} "{{ artifacts_root }}/images/{{ item.path | basename }}"
+  loop: "{{ packaged_image_archives.files | default([]) }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  when: (packaged_image_archives.files | default([]) | length) > 0
+    and deployment_profile != "kweaver-core-only"

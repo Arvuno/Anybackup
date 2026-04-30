@@ -1,0 +1,64 @@
+---
+type: object_type
+id: backup_config
+name: 备份基础配置
+tags: []
+---
+
+## ObjectType: 备份基础配置
+
+用于描述保护对象通用备份配置，覆盖存储、压缩、加密、重试和一致性校验等公共参数；当前使用关联存储池名称作为主要展示字段。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | backup_config | backup_config |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| lan_free | 是否开启LAN-Free | integer | LAN-Free 开关 | lan_free |
+| failure_retry | 失败重试 | binary | 是否开启失败自动重试 | failure_retry |
+| deduplication_tread_num | 重删线程数量 | integer | 重删线程数 | deduplication_tread_num |
+| storage_service_id | 存储服务ID | string | 存储服务标识 | storage_service_id |
+| finger_library_id | 指纹库ID | string | 指纹库标识 | finger_library_id |
+| encryption_tread_num | 加密线程数量 | integer | 加密线程数 | encryption_tread_num |
+| failure_retry_interval | 失败重试间隔（分钟） | integer | 重试持续时间，单位分钟 | failure_retry_interval |
+| storage_pool_type | 存储池类型 | integer | 存储池类型 | storage_pool_type |
+| failure_retry_count | 失败重试次数 | integer | 重试次数 | failure_retry_count |
+| compress_tread_num | 压缩线程数量 | integer | 压缩线程数 | compress_tread_num |
+| encryption_storage | 加密存储 | binary | 是否开启存储加密 | encryption_storage |
+| config_version | 配置版本 | integer | 配置版本 | config_version |
+| forced_retention_cycle | 强制保留周期 | integer | 强制数据保留周期 | forced_retention_cycle |
+| deduplication | 开启重删 | binary | 是否开启重复数据删除 | deduplication |
+| config_type | 配置类型 | integer | 配置类型 | config_type |
+| storage_pool_name | 关联存储池名称 | string | 公共配置关联的存储池名称 | storage_pool_name |
+| encryption_secret_key | 数据加密密钥 | string | 数据加密密钥 | encryption_secret_key |
+| data_consistency_switch | 数据一致性校验开关 | integer | 数据一致性校验开关 | data_consistency_switch |
+| compress_location | 数据压缩方式 | binary | 数据压缩方式[1.源端压缩,2.目的端压缩] | compress_location |
+| permanent_increment | 是否开启永久增量备份 | binary | 是否开启永久增量备份 | permanent_increment |
+| multiple_regions | 是否启用多区域 | integer | 是否启用多区域 | multiple_regions |
+| id | 公共配置ID | string | 唯一标识 | id |
+| client_id | 客户端ID | string | 客户端唯一标识 | client_id |
+| forced_retention_switch | 强制保留切换 | integer | 强制数据保留周期开关 | forced_retention_switch |
+| status | 状态 | integer | 备份配置状态 | status |
+| deduplication_location | 重删位置 | binary | 重删方式[1.源端重删,2.目的端重删] | deduplication_location |
+| compress | 开启数据压缩 | binary | 是否开启数据压缩 | compress |
+| storage_pool_id | 存储池ID | string | 存储池标识 | storage_pool_id |
+| backup_protocol_type | 备份协议 | integer | 备份协议 | backup_protocol_type |
+| compress_algorithm | 压缩算法 | integer | 压缩算法[0.不压缩,1.快速,2.标准,3.强力] | compress_algorithm |
+| data_consistency_logic | 数据一致性校验数据 | integer | 数据一致性校验数据 | data_consistency_logic |
+| encryption_algorithm | 加密算法 | integer | 数据加密算法[0.不加密,1.AES256GCM,2.SM4,3.BlowFish] | encryption_algorithm |
+| encryption_location | 数据加密方式 | binary | 数据加密方式[1.源端加密,2.目的端加密] | encryption_location |
+| encryption_trans | 是否开启传输加密 | binary | 是否开启传输加密 | encryption_trans |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: storage_pool_name
+Incremental Key:

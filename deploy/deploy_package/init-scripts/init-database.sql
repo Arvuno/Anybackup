@@ -1,0 +1,3 @@
+-- init-database.sql
+-- Placeholder initialization script for AnyBackup Agent V9.
+-- Replace this file with the real schema and seed data once the database contract is finalized.

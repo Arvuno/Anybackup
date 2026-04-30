@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: backup_region_to_client_cfg
+name: 备份区域配置包含客户端配置
+tags: []
+---
+
+## RelationType: 备份区域配置包含客户端配置
+
+描述区域级备份配置与客户端配置之间的从属关系，来源于 `backup_client_config.region_id`；用于表达多区域场景下某一区域绑定了哪些备份客户端。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| backup_region_config | backup_client_config | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| id | region_id |

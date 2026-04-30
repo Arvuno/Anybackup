@@ -1,0 +1,41 @@
+replicaCount: {{ core_agent_service.replicas }}
+
+image:
+  repository: core-agent-service
+  tag: "{{ core_agent_service.image_tag }}"
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: {{ core_agent_service.service_port }}
+  targetPort: {{ core_agent_service.container_port }}
+
+config:
+  rabbitmqExchange: conversation.agent.events
+  rabbitmqExchangeType: direct
+  rabbitmqQueue: core_agent.conversation.events.v1
+  kweaverBaseUrl: {{ effective_kweaver_runtime_base_url | to_json }}
+  kweaverDecisionAgentId: {{ backup_agent_id | to_json }}
+  kweaverBusinessDomain: bd_public
+  kweaverTimeout: 30
+  kweaverTlsInsecure: true
+  kweaverProbeOnStartup: false
+  coreAgentLogLevel: INFO
+  coreAgentLogToStdout: true
+  coreAgentLogFile: ""
+
+secrets:
+  create: true
+  name: core-agent-service-secrets
+  databaseUrl: {{ v9_runtime.postgres_sync_url | to_json }}
+  rabbitmqUrl: {{ v9_runtime.rabbitmq_url | to_json }}
+  kweaverToken: {{ kweaver_token | to_json }}
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

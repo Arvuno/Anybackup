@@ -1,0 +1,9 @@
+# kweaver-s3-config.yaml
+s3:
+  endpoint: ""
+  region: us-east-1
+  accessKeyID: ""
+  secretAccessKey: ""
+  bucketName: ""
+  skipVerify: true
+  disableHTTPS: false

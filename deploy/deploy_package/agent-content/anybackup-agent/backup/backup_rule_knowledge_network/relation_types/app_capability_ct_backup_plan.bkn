@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: app_capability_ct_backup_plan
+name: 应用能力约束计划
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: 应用能力约束计划
+
+通过 `app_backup_capability.app_object_type` 匹配 `backup_plan.app_object_type`，用于过滤应用不支持的计划条目。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| app_backup_capability | backup_plan | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| app_object_type | app_object_type |

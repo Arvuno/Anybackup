@@ -1,0 +1,5 @@
+.worktrees/
+.cache/
+.gocache/
+/foundation-cli.exe
+/foundation-cli

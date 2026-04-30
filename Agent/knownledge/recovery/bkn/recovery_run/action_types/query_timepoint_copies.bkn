@@ -1,0 +1,57 @@
+---
+type: action_type
+action_type: add
+id: query_timepoint_copies
+name: 查询时间点副本列表
+tags: [时间点副本, 查询, 备份, Foundation]
+enabled: true
+risk_level: low
+requires_approval: false
+---
+
+## ActionType: 查询时间点副本列表
+
+查询指定数据库保护对象下的备份时间点副本列表，支持 MySQL、Oracle、SQL Server 等多种数据库类型。需要提供数据库保护对象ID和存储池ID作为参数。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| timepoint_copy |
+
+### Pre-conditions
+
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| protection_object | exist | true | 数据库保护对象必须存在 |
+| protection_object | property:objectId | valid | objectId 必须是有效的数据库保护对象ID |
+| storage_pool | exist | true | 存储池必须存在 |
+| storage_pool | property:storagePoolId | valid | storagePoolId 必须是有效的存储池ID |
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| timepoint_copy | 仅查询操作，不影响数据 |
+| protection_object | 仅查询操作，不影响数据 |
+| storage_pool | 仅查询操作，不影响数据 |
+
+### Tool Configuration
+
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | foundation_toolbox | query_timepoint_copies |
+
+### Parameter Binding
+
+| Name | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| objectId | string | input | - | 数据库保护对象ID（必填） |
+| storagePoolId | string | input | - | 存储池ID（必填） |
+
+### Execution Description
+
+1. 接收参数
+2. 验证参数 - 检查 objectId 是否存在、是否有效；检查 storagePoolId 是否存在、是否有效
+3. 调用 Foundation 工具
+4. 返回结果 - 返回时间点副本列表，包含：timePointId, objectId, backup_time, backup_type, size, status 等

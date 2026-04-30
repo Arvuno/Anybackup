@@ -1,0 +1,45 @@
+---
+type: action_type
+action_type: add
+id: query_protection_objects
+name: 查询数据库保护对象
+tags: [MySQL, Oracle, SQL Server, 查询, 保护对象]
+enabled: true
+risk_level: low
+requires_approval: false
+---
+
+## ActionType: 查询数据库保护对象
+
+查询 Foundation 接入的所有数据库保护对象，支持 MySQL、Oracle、SQL Server 等多种数据库类型。可通过 appType 参数过滤特定类型的数据库保护对象。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| protection_object |
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| protection_object | 仅查询操作，不影响数据 |
+
+### Tool Configuration
+
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | foundation_toolbox | query_resource_center_db |
+
+### Parameter Binding
+
+| Name | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| appType | string | input | - | 应用类型（可选，用于过滤特定类型的数据库保护对象） |
+
+### Execution Description
+
+1. 接收参数
+2. 验证参数 - 检查 appType 是否有效（如果提供）
+3. 调用 Foundation 工具
+4. 返回结果 - 返回数据库保护对象列表，包含：objectId, name, appType, business_name, online_status, authorization_status 等

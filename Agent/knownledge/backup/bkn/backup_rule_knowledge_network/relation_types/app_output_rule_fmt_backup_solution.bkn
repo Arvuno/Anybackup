@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: app_output_rule_fmt_backup_solution
+name: 应用输出规则格式化方案
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: 应用输出规则格式化方案
+
+通过 `app_output_rule.app_object_type` 与 `backup_solution.app_object_type` 建立输出规则到候选备份方案的显式关系，用于按应用类型选择最终展示层级与章节命名规则。若未命中专属输出规则，推荐 action 应继续回退到 `app_object_type = all` 的通用输出规则。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| app_output_rule | backup_solution | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| app_object_type | app_object_type |

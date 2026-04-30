@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Design Diagram Maintainer"
+  short_description: "Refresh Mermaid diagrams in design docs."
+  default_prompt: "Use $design-diagram-maintainer to update Mermaid architecture and deployment diagrams in docs/00_设计文档."

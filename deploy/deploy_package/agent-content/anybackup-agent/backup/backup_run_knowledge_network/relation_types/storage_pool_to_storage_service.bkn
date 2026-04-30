@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: storage_pool_to_storage_service
+name: 存储池属于存储服务
+tags: []
+---
+
+## RelationType: 存储池属于存储服务
+
+描述存储池与存储服务之间的从属关系，来源于 `pool_v8.storage_svc_id`。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| storage_pool | storage_service | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| storage_svc_id | id |

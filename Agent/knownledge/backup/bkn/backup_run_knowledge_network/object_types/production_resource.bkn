@@ -1,0 +1,36 @@
+---
+type: object_type
+id: production_resource
+name: 生产资源
+tags: []
+---
+
+## ObjectType: 生产资源
+
+用于描述被纳入备份管理的生产资源目录，记录资源名称、类型、归属生产系统及应用类型等信息。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 87959aec-580c-45d4-ae6f-886495445032 | production_resource |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| productionResourceId | 生产资源ID | string | 生产资源唯一标识 | productionResourceId |
+| productionSystemId | 生产系统ID | string | 所属生产系统唯一标识 | productionSystemId |
+| productionResourceName | 生产资源名称 | string | 生产资源名称 | originalName |
+| appType | 应用类型 | string | 应用类型
+eso_backupengine_fileengine:文件
+eso_backupengine_hypermysqlengine:Mysql数据库 | appType |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: productionResourceId
+Display Key: productionResourceName
+Incremental Key:

@@ -1,0 +1,39 @@
+---
+type: object_type
+id: client
+name: 客户端
+tags: [MySQL, 恢复, 客户端, 主机]
+---
+
+## ObjectType: 客户端
+
+恢复客户端对象，记录了可用于执行恢复操作的主机信息。客户端必须部署在目标主机上，负责发现MySQL实例、接收恢复数据、执行恢复操作。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| clientId | 客户端ID | string | 客户端唯一标识符（去掉横杠的UUID） | clientId |
+| clientName | 客户端名称 | string | 客户端名称，如MySQL-Client-01 | clientName |
+| clientType | 客户端类型 | integer | 客户端类型（1=物理客户端，2=虚拟客户端，3=其他类型） | clientType |
+| clientIp | 客户端IP | string | 客户端IP地址（IPv4或IPv6） | clientIp |
+| clientMac | 客户端MAC地址 | string | 客户端MAC地址 | clientMac |
+| type | 操作系统类型 | integer | 操作系统类型（1=Windows，2=Linux，3=Aix） | type |
+| platform | 平台类型 | string | 平台类型 | platform |
+| status | 客户端状态 | integer | 客户端状态（0=离线，1=在线） | status |
+| clientVersion | 客户端版本 | string | 客户端发布版本，如8.0.8.0.318 | clientVersion |
+
+### Keys
+
+Primary Keys: clientId
+Display Key: clientName
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | client | client |

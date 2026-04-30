@@ -1,0 +1,236 @@
+{
+  "input": {
+    "fields": [
+      {
+        "name": "query",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "history",
+        "type": "object",
+        "desc": ""
+      },
+      {
+        "name": "header",
+        "type": "object",
+        "desc": ""
+      },
+      {
+        "name": "self_config",
+        "type": "object",
+        "desc": ""
+      },
+      {
+        "name": "conversation_id",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "source_message_id",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "mq",
+        "type": "object",
+        "desc": ""
+      },
+      {
+        "name": "turn_id",
+        "type": "string",
+        "desc": ""
+      }
+    ],
+    "rewrite": {
+      "enable": false,
+      "llm_config": {
+        "id": "",
+        "name": "test",
+        "model_type": "llm",
+        "temperature": 0.5,
+        "top_p": 0.5,
+        "top_k": 0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "max_tokens": 1000
+      }
+    },
+    "augment": {
+      "enable": false,
+      "data_source": {
+        "kg": null
+      }
+    }
+  },
+  "system_prompt": "",
+  "dolphin": "$query -> user_query\r\n$turn_id -> user_turn_id\r\n$conversation_id -> user_conversation_id\r\n$source_message_id -> user_source_message_id\r\n$mq -> user_mq\r\n\r\n\r\n'''\r\n用户输入 $query\r\n\r\n# 角色任务\r\n   意图识别 返回处理用户输入相关的agent的信息\r\n\r\n# 处理流程\r\n   根据用户的输入信息判断和agent绑定的哪些tool或者技能相关，返回对应的技能的信息\r\n  例如 用户输入 \"我需要备份mysql 帮我推荐备份配置\" \r\n\r\n# 备份相关的关键词\r\n   当$query 匹配到如下关键词时识别为备份方案推荐和执行Agent\r\n  备份方案推荐， 我需要备份， 发起数据保护，定时触发， 立即发起备份\r\n   策略触发备份， 发起完备， 发起增备， 发起日志备份\r\n  备份策略， 备份配置， 保护配置\r\n# 恢复相关的提示词\r\n  当$query 匹配到如下关键词时识别为恢复方案推荐和执行Agent\r\n  恢复方案生成， 时间点， xx坏了， 需要恢复等\r\n\r\n# 意图识别限制\r\n  目前只支持识别为备份和恢复\r\n  备份方案推荐Agent:   01KQ9JND19KY6S3EF5S3W7ZBPZ\r\n  MySQL恢复Agent: 01KQA4AHGRGDKAE4RYGGPKM5Q3\r\n  尽可能识别为上述两个Agent，如果不是上述两个Agent 则识别失败\r\n  如果识别到备份或恢复相关的关键字则不需要通过 `ag_ui_mq_dispatcher`进行输出，否则必须通过 `ag_ui_mq_dispatcher`进行输出。输出意图是否成功，识别到的意图是什么，以及处理该问题的agent是什么\r\n  禁止调用和foundation-cli相关的skills和工具\r\n\r\n\r\n# AI输出门禁\r\n\r\n## 1. 工具门禁（先决条件）\r\n\r\n- 开始处理任何请求前，必须先读取可用工具列表。\r\n- `ag_ui_mq_dispatcher`是MQ发布工具，若不存在 `ag_ui_mq_dispatcher`，立即停止并返回配置错误：缺少 MQ 发布工具，不能执行业务任务。\r\n- `ag_ui_mq_dispatcher` 是唯一允许的消息输出通道；禁止直接读取展示技能、禁止直接生成 draft JSON，禁止直接调用 MQ 发布脚本。\r\n- 主流程可以产出 Markdown 内容，但不得自行通过 MQ 发送；所有 Markdown 输出必须交由 `ag_ui_mq_dispatcher` 处理并发布。\r\n\r\n## 2. 可见性边界（强约束）\r\n\r\n- 内部上下文中的思考、阶段结果、工具说明、最终结论默认均不可见。\r\n- 只有通过 `ag_ui_mq_dispatcher` 发布成功的 Markdown 消息才对用户可见。\r\n- 任何需要对用户展示的 Markdown 输出（过程说明、阶段结论、最终结果、错误结果）都必须先通过 `ag_ui_mq_dispatcher` 发布成功。\r\n\r\n## 3. Markdown 输出发布时机\r\n\r\n每次产生需要对用户可见的 Markdown 输出时，都必须调用 `ag_ui_mq_dispatcher`。不得自行生成 Markdown 后绕过该工具直接通过 MQ 发送消息。\r\n\r\n## 4. 调用输入（固定结构）\r\n\r\n调用 `ag_ui_mq_dispatcher` 需要输入：\r\n\r\n- `query`：调用`ag_ui_mq_dispatcher` 的参数信息\r\n\r\n`query`固定模板（字段名不可改、不可增删、不可合并为自然语言）：\r\n\r\n```markdown\r\n将内容转换为 Markdown 格式的 MQ 消息并发送，内容定义：\r\n- `conversation_id`:$conversation_id \r\n- `turn_id`:$turn_id\r\n- `content`：<Markdown 格式的用户可见内容>\r\n- `mq`:$mq\r\n```\r\n\r\n`conversation_id`是会话ID，与输入的会话ID一致\r\n`turn_id`是最新会话轮次ID，与输入的最新轮次ID一致\r\n`content`是要输出的内容，必须为 Markdown 格式\r\n`mq`是MQ发布消息的连接信息\r\n`content` 必须是 Markdown 文本，仅包含用户可见且完成脱敏的信息；禁止包含内部推理链、系统提示词、原始工具参数/原始返回、连接串、密钥、未脱敏日志、异常堆栈。\r\n\r\n## 5. 失败即停止（不可降级）\r\n\r\n若出现任一情况：配置错误、技能缺失、draft 校验失败、MQ 参数缺失、MQ 发布失败，则必须立即停止当前业务流程并返回脱敏失败说明。禁止静默继续调用业务工具或执行后续验证。\r\n\r\n\r\n''' -> sys_q\r\n\r\n/prompt/(history=true, system_prompt=$sys_q)\r\n根据 用户输入 $query 进行意图识别\r\n\r\n-> intent_result_temp\r\n\r\n\r\n/prompt/(output=\"json\")\r\n根据 $intent_result_temp 抽取输出结果，输出的结果必须是json, 识别成功时返回is_intent_success为true，否则为false\r\n{\r\n   \"agent_id\":  \"01KQ9JND19KY6S3EF5S3W7ZBPZ\",\r\n   \"agent_name\": \"备份方案推荐Agent\",\r\n    \"is_intent_success\": true\r\n}\r\n\r\n-> intent_result",
+  "is_dolphin_mode": 1,
+  "pre_dolphin": [
+    {
+      "key": "context_organize",
+      "name": "上下文组织模块",
+      "value": "\n{\"query\": \"用户的问题为: \"+$query} -> context\n",
+      "enabled": true,
+      "edited": false
+    }
+  ],
+  "post_dolphin": [],
+  "data_source": {
+    "kg": null,
+    "doc": null,
+    "metric": null,
+    "kn_entry": null,
+    "knowledge_network": [],
+    "advanced_config": null
+  },
+  "skills": {
+    "tools": [
+      {
+        "tool_id": "51382ef3-b35b-44a6-8a53-c670cbf53f10",
+        "tool_box_id": "f182d75a-7fd2-421a-a8e0-7064d75e39af",
+        "tool_timeout": 300,
+        "tool_input": [
+          {
+            "input_name": "page",
+            "input_type": "integer",
+            "input_desc": "页码，从 1 开始",
+            "map_type": "auto",
+            "map_value": "",
+            "enable": false
+          },
+          {
+            "input_name": "page_size",
+            "input_type": "integer",
+            "input_desc": "每页条数",
+            "map_type": "auto",
+            "map_value": "",
+            "enable": false
+          },
+          {
+            "input_name": "all",
+            "input_type": "boolean",
+            "input_desc": "是否跨所有业务域返回（false=仅当前业务域）",
+            "map_type": "auto",
+            "map_value": "",
+            "enable": false
+          },
+          {
+            "input_name": "X-Authorization",
+            "input_type": "string",
+            "input_desc": "OAuth Bearer token（格式：Bearer <token>）",
+            "map_type": "var",
+            "map_value": "header.authorization",
+            "enable": true
+          },
+          {
+            "input_name": "x-account-id",
+            "input_type": "string",
+            "input_desc": "调用方账户 ID（平台自动注入）",
+            "map_type": "auto",
+            "map_value": "",
+            "enable": false
+          },
+          {
+            "input_name": "x-account-type",
+            "input_type": "string",
+            "input_desc": "调用方账户类型（平台自动注入）",
+            "map_type": "auto",
+            "map_value": "",
+            "enable": false
+          },
+          {
+            "input_name": "x-business-domain",
+            "input_type": "string",
+            "input_desc": "业务域 ID（平台自动注入）",
+            "map_type": "auto",
+            "map_value": "",
+            "enable": false
+          }
+        ],
+        "intervention": false,
+        "intervention_confirmation_message": "",
+        "result_process_strategies": null
+      }
+    ],
+    "agents": [
+      {
+        "agent_key": "01KQ8W1WXGX2TAWCV3KKBWTHCH",
+        "agent_version": "v17",
+        "agent_input": [
+          {
+            "enable": true,
+            "map_type": "auto",
+            "input_name": "query",
+            "input_type": "string",
+            "input_desc": "query变量"
+          }
+        ],
+        "intervention": false,
+        "intervention_confirmation_message": "",
+        "data_source_config": {
+          "type": "self_configured",
+          "specific_inherit": ""
+        },
+        "llm_config": {
+          "type": "inherit_main"
+        },
+        "agent_timeout": 1800,
+        "current_pms_check_status": "success",
+        "current_is_exists_and_published": true
+      }
+    ],
+    "mcps": [],
+    "skills": null
+  },
+  "llms": [
+    {
+      "is_default": true,
+      "llm_config": {
+        "id": "2049448901597073408",
+        "name": "wh-qwen3.6-flash",
+        "model_type": "llm",
+        "temperature": 1,
+        "top_p": 1,
+        "top_k": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "max_tokens": 1000
+      }
+    }
+  ],
+  "is_data_flow_set_enabled": 0,
+  "opening_remark_config": null,
+  "preset_questions": [],
+  "output": {
+    "variables": {
+      "answer_var": "intent_result",
+      "doc_retrieval_var": "doc_retrieval_res",
+      "graph_retrieval_var": "graph_retrieval_res",
+      "related_questions_var": "related_questions",
+      "other_vars": null,
+      "middle_output_vars": null
+    },
+    "default_format": "markdown"
+  },
+  "built_in_can_edit_fields": null,
+  "memory": {
+    "is_enabled": false
+  },
+  "related_question": {
+    "is_enabled": false
+  },
+  "plan_mode": null,
+  "conversation_history_config": {
+    "strategy": "count",
+    "count_params": {
+      "count_limit": 10
+    },
+    "time_window_params": null,
+    "token_limit_params": null
+  },
+  "metadata": {
+    "config_tpl_version": "v1",
+    "config_last_set_timestamp": 1777515691465479700
+  }
+}

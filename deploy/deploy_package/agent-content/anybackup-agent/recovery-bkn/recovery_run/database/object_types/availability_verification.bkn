@@ -1,0 +1,33 @@
+---
+type: object_type
+id: availability_verification
+name: 可用性验证
+tags: [MySQL, 恢复, 验证, 可用性]
+---
+
+## ObjectType: 可用性验证
+
+可用性验证对象是 `execute_availability_verification` 动作使用的执行契约 / 执行模板对象。它通过应用类型适配数据保护对象，确定需要采用的验证方法和工具，但不单独定义验证结果对象。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| appType | 应用类型 | string | 应用类型（关联数据保护对象） | appType |
+| description | 验证说明 | string | 验证说明（如何进行验证，验证结果是什么才能证明可用还是不可用） | description |
+| tool | 验证工具 | string | 验证工具 | tool |
+| params | 验证参数 | string | 验证工具的参数（JSON字符串格式，可json.loads()解析） | params |
+
+### Keys
+
+Primary Keys: appType
+Display Key: appType
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|

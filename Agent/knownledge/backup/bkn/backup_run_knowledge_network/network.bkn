@@ -1,0 +1,17 @@
+---
+type: knowledge_network
+id: backup_run_knowledge_network
+name: 备份运行知识网络
+tags: []
+branch: main
+business_domain: bd_public
+---
+
+# 备份运行知识网络
+
+
+## Network Overview
+
+- **ObjectTypes** (object_types/): backup_client_config, backup_config, backup_region_config, backup_storage_pool_config, client, mysql_backup_config, production_resource, production_system, protected_object, storage_pool, storage_service
+- **RelationTypes** (relation_types/): backup_config_to_client, backup_config_to_region_cfg, backup_config_to_storage_pool, backup_config_to_storage_service, backup_region_to_client_cfg, backup_region_to_pool_cfg, prod_resource_gen_protected_object, prod_system_has_prod_resource, prod_system_to_parent_system, protected_object_gen_mysql_config, protected_object_has_backup_config, protected_object_to_prod_system, storage_pool_to_storage_service
+- **ActionTypes** (action_types/): query_prod_resource_backup_cfg, query_protected_object_backup_config, query_storage_pool, query_storage_service

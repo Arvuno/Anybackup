@@ -1,0 +1,146 @@
+---
+- name: Ensure application namespace exists for runtime alias
+  ansible.builtin.command: "kubectl get namespace {{ deployment_namespace }}"
+  register: network_runtime_namespace_check
+  changed_when: false
+  failed_when: false
+
+- name: Create application namespace for runtime alias when missing
+  ansible.builtin.command: "kubectl create namespace {{ deployment_namespace }}"
+  when: network_runtime_namespace_check.rc != 0
+
+- name: Use explicit internal KWeaver base URL when provided
+  ansible.builtin.set_fact:
+    effective_kweaver_runtime_base_url: "{{ kweaver_internal_base_url }}"
+    kweaver_runtime_alias_created: false
+    kweaver_runtime_alias_service_name: ""
+  when: kweaver_internal_base_url | default('', true) | length > 0
+
+- name: Use legacy KWeaver runtime base URL override when provided
+  ansible.builtin.set_fact:
+    effective_kweaver_runtime_base_url: "{{ kweaver_runtime_base_url }}"
+    kweaver_runtime_alias_created: false
+    kweaver_runtime_alias_service_name: ""
+  when:
+    - effective_kweaver_runtime_base_url is not defined
+    - kweaver_runtime_base_url | default('', true) | length > 0
+
+- name: Resolve explicit KWeaver runtime service when configured
+  ansible.builtin.command: "kubectl get svc -n {{ kweaver_runtime.service_namespace }} {{ kweaver_runtime.service_name }}"
+  register: configured_kweaver_runtime_service_check
+  changed_when: false
+  when:
+    - effective_kweaver_runtime_base_url is not defined
+    - kweaver_runtime.service_name | default('', true) | length > 0
+
+- name: Set configured KWeaver runtime service fact
+  ansible.builtin.set_fact:
+    kweaver_runtime_target_service_name: "{{ kweaver_runtime.service_name }}"
+  when:
+    - effective_kweaver_runtime_base_url is not defined
+    - kweaver_runtime.service_name | default('', true) | length > 0
+
+- name: Auto-detect KWeaver runtime service from candidate list
+  ansible.builtin.shell: |
+    set -eu
+    for candidate in {{ kweaver_runtime.service_candidates | join(' ') }}; do
+      if kubectl get svc -n {{ kweaver_runtime.service_namespace }} "${candidate}" >/dev/null 2>&1; then
+        printf '%s' "${candidate}"
+        exit 0
+      fi
+    done
+    exit 1
+  register: autodetected_kweaver_runtime_service
+  changed_when: false
+  when:
+    - effective_kweaver_runtime_base_url is not defined
+    - kweaver_runtime.service_name | default('', true) | length == 0
+
+- name: Set auto-detected KWeaver runtime service fact
+  ansible.builtin.set_fact:
+    kweaver_runtime_target_service_name: "{{ autodetected_kweaver_runtime_service.stdout | trim }}"
+  when:
+    - effective_kweaver_runtime_base_url is not defined
+    - kweaver_runtime.service_name | default('', true) | length == 0
+
+- name: Assert KWeaver runtime service was resolved
+  ansible.builtin.assert:
+    that:
+      - effective_kweaver_runtime_base_url is defined or (kweaver_runtime_target_service_name | default('') | length > 0)
+    fail_msg: >-
+      Could not resolve a KWeaver runtime service in namespace {{ kweaver_runtime.service_namespace }}.
+      Set kweaver_internal_base_url or kweaver_runtime.service_name explicitly if autodetection is not suitable.
+
+- name: Query KWeaver runtime service ports
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - get
+      - svc
+      - -n
+      - "{{ kweaver_runtime.service_namespace }}"
+      - "{{ kweaver_runtime_target_service_name }}"
+      - -o
+      - "jsonpath={range .spec.ports[*]}{.port}{'\\n'}{end}"
+  register: kweaver_runtime_service_ports_raw
+  changed_when: false
+  when: effective_kweaver_runtime_base_url is not defined
+
+- name: Resolve KWeaver runtime target port
+  ansible.builtin.set_fact:
+    kweaver_runtime_target_service_port: >-
+      {{
+        (
+          kweaver_runtime.service_port
+          if (kweaver_runtime.service_port | default(0) | int) > 0
+          else ((kweaver_runtime_service_ports_raw.stdout_lines | reject('equalto', '') | list | first) | default('0'))
+        ) | int
+      }}
+  when: effective_kweaver_runtime_base_url is not defined
+
+- name: Assert KWeaver runtime target port is usable
+  ansible.builtin.assert:
+    that:
+      - kweaver_runtime_target_service_port | int > 0
+    fail_msg: >-
+      KWeaver runtime service {{ kweaver_runtime.service_namespace }}/{{ kweaver_runtime_target_service_name | default('') }}
+      does not expose a usable service port.
+  when: effective_kweaver_runtime_base_url is not defined
+
+- name: Resolve KWeaver runtime alias facts
+  ansible.builtin.set_fact:
+    kweaver_runtime_target_fqdn: "{{ kweaver_runtime_target_service_name }}.{{ kweaver_runtime.service_namespace }}.svc.cluster.local"
+    kweaver_runtime_alias_fqdn: "{{ kweaver_runtime.alias_name }}.{{ kweaver_runtime.alias_namespace }}.svc.cluster.local"
+  when: effective_kweaver_runtime_base_url is not defined
+
+- name: Render KWeaver runtime alias manifest
+  ansible.builtin.template:
+    src: "{{ package_root }}/ansible/roles/internal/network_publish/templates/kweaver-runtime-alias.yaml.j2"
+    dest: "{{ generated_root }}/kweaver-runtime-alias.yaml"
+    mode: "0600"
+  when: effective_kweaver_runtime_base_url is not defined
+
+- name: Apply KWeaver runtime alias manifest
+  ansible.builtin.command: "kubectl apply -f {{ generated_root }}/kweaver-runtime-alias.yaml"
+  when: effective_kweaver_runtime_base_url is not defined
+
+- name: Set derived KWeaver runtime base URL
+  ansible.builtin.set_fact:
+    effective_kweaver_runtime_base_url: >-
+      {{
+        kweaver_runtime.scheme
+        ~ '://'
+        ~ kweaver_runtime_alias_fqdn
+        ~ ':'
+        ~ (kweaver_runtime_target_service_port | string)
+        ~ (kweaver_runtime.path | default(''))
+      }}
+    kweaver_runtime_alias_created: true
+    kweaver_runtime_alias_service_name: "{{ kweaver_runtime.alias_name }}"
+  when: effective_kweaver_runtime_base_url is not defined
+
+- name: Print KWeaver runtime network summary
+  ansible.builtin.debug:
+    msg:
+      - "KWeaver runtime base URL: {{ effective_kweaver_runtime_base_url }}"
+      - "KWeaver runtime alias created: {{ kweaver_runtime_alias_created | default(false) }}"

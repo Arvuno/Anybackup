@@ -1,0 +1,51 @@
+---
+type: action_type
+action_type: add
+id: query_clients
+name: 查询客户端列表
+tags: [客户端, 查询, Foundation]
+enabled: true
+risk_level: low
+requires_approval: false
+---
+
+## ActionType: 查询客户端列表
+
+查询 Foundation 接入的所有客户端列表，可根据客户端状态、操作系统类型和客户端类型进行筛选。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| client |
+
+### Pre-conditions
+
+无特殊前置条件。
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| client | 仅查询操作，不影响数据 |
+
+### Tool Configuration
+
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | foundation_toolbox | query_clients |
+
+### Parameter Binding
+
+| Name | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| status | integer | input | - | 客户端状态（可选，默认为1在线） |
+| type | integer | input | - | 操作系统类型（可选，1=Windows，2=Linux，3=Aix） |
+| clientType | integer | input | - | 客户端类型（可选，1=物理客户端，2=虚拟客户端，3=其他类型） |
+
+### Execution Description
+
+1. 接收参数
+2. 验证参数 - 检查 status 是否有效（如果提供）；检查 type 是否有效（如果提供）；检查 clientType 是否有效（如果提供）
+3. 调用 Foundation 工具
+4. 返回结果 - 返回客户端列表，包含：clientId, clientName, clientType, clientIp, clientMac, type, platform, status, clientVersion

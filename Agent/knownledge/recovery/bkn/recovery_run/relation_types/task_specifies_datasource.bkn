@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: task_specifies_datasource
+name: 恢复任务明确恢复数据源
+tags: [MySQL, 恢复, 任务, 数据源]
+---
+
+## RelationType: 恢复任务明确恢复数据源
+
+恢复任务对象通过 recovery_datasourceId 字段关联到恢复数据源对象，明确恢复任务使用哪个恢复数据源进行恢复（可选关系）。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| recovery_task | recovery_datasource | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| recovery_datasourceId | recovery_datasourceId |

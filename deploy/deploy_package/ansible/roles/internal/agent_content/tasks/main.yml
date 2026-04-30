@@ -1,0 +1,443 @@
+---
+- name: Install KWeaver compatibility services before Agent content login
+  ansible.builtin.include_role:
+    name: internal/kweaver_core_compat
+
+- name: Configure KWeaver CLI for Agent content deployment
+  ansible.builtin.include_role:
+    name: internal/kweaver_cli_config
+  when: kweaver_cli.enabled | default(true) | bool
+
+- name: Check packaged Agent content exists
+  ansible.builtin.stat:
+    path: "{{ agent_content.package_dir }}"
+  delegate_to: localhost
+  become: false
+  register: local_agent_content
+  when: agent_content.copy_assets | bool
+
+- name: Assert packaged Agent content exists
+  ansible.builtin.assert:
+    that:
+      - local_agent_content.stat.exists
+      - local_agent_content.stat.isdir
+    fail_msg: >-
+      Missing packaged Agent content at {{ agent_content.package_dir }}.
+      Stage E:\Code\Service\Anybackup\Agent assets into this release package before running
+      --profile agent-content-only.
+  when: agent_content.copy_assets | bool
+
+- name: Ensure remote Agent content directory exists
+  ansible.builtin.file:
+    path: "{{ agent_content.remote_root }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy Agent content assets to remote host
+  ansible.builtin.copy:
+    src: "{{ agent_content.package_dir }}/"
+    dest: "{{ agent_content.remote_root }}/"
+    mode: "0644"
+  when: agent_content.copy_assets | bool
+
+- name: Make packaged Agent install scripts executable
+  ansible.builtin.shell: |
+    set -euo pipefail
+    find "{{ agent_content.remote_root }}/anybackup-agent" -type f -name '*.sh' -exec chmod 0755 {} \;
+  changed_when: false
+
+- name: Check required Agent content commands
+  ansible.builtin.command: "which {{ item }}"
+  register: agent_content_command_check
+  changed_when: false
+  failed_when: false
+  loop: "{{ agent_content.required_commands }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Assert required Agent content commands exist
+  ansible.builtin.assert:
+    that:
+      - item.rc == 0
+    fail_msg: "Required command {{ item.item }} is missing for Agent content deployment."
+  loop: "{{ agent_content_command_check.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Import backup rule knowledge PostgreSQL data
+  ansible.builtin.command:
+    argv:
+      - "{{ agent_content.remote_root }}/anybackup-agent/backup-install/rule-knowledge/install.sh"
+      - --namespace
+      - "{{ agent_content.backup_rule_knowledge.namespace }}"
+      - --pod
+      - "{{ agent_content.backup_rule_knowledge.pod }}"
+      - --database
+      - "{{ agent_content.backup_rule_knowledge.database }}"
+      - --username
+      - "{{ agent_content.backup_rule_knowledge.username }}"
+      - --schema
+      - "{{ agent_content.backup_rule_knowledge.schema }}"
+      - --min-table-count
+      - "{{ agent_content.backup_rule_knowledge.min_table_count | string }}"
+  when: agent_content.deploy_backup_rule_knowledge | bool
+
+- name: Login to KWeaver when credentials are provided
+  ansible.builtin.shell: |
+    set -euo pipefail
+    args=(auth login "{{ agent_content.kweaver_base_url }}" -u "{{ agent_content.kweaver_username }}" -p "{{ agent_content.kweaver_password }}")
+    {% if agent_content.kweaver_insecure | bool %}
+    args+=(--insecure)
+    {% endif %}
+    kweaver "${args[@]}"
+  register: agent_content_login
+  no_log: true
+  changed_when: agent_content_login.rc == 0
+  when:
+    - not agent_content.skip_login | bool
+    - agent_content.kweaver_base_url | length > 0
+    - agent_content.kweaver_username | length > 0
+    - agent_content.kweaver_password | length > 0
+
+- name: Verify KWeaver CLI authentication before content changes
+  ansible.builtin.command:
+    argv:
+      - kweaver
+      - bkn
+      - list
+      - -bd
+      - "{{ agent_content.business_domain }}"
+  register: agent_content_kweaver_auth_check
+  changed_when: false
+  failed_when: false
+
+- name: Assert KWeaver CLI authentication is usable
+  ansible.builtin.assert:
+    that:
+      - agent_content_kweaver_auth_check.rc == 0
+    fail_msg: >-
+      KWeaver CLI is not authenticated or cannot reach the configured platform.
+      Re-login on the target host or provide agent_content_kweaver_base_url,
+      agent_content_kweaver_username, and agent_content_kweaver_password.
+      stderr={{ agent_content_kweaver_auth_check.stderr | default('') }}
+
+- name: Deploy Foundation OpenSearch HTTP proxy in V9 infra namespace
+  ansible.builtin.command:
+    argv:
+      - "{{ agent_content.remote_root }}/anybackup-agent/foundation-opensearch-proxy/install.sh"
+      - --namespace
+      - "{{ agent_content.foundation_opensearch_proxy.namespace }}"
+      - --name
+      - "{{ agent_content.foundation_opensearch_proxy.name }}"
+      - --service-name
+      - "{{ agent_content.foundation_opensearch_proxy.service_name }}"
+      - --image
+      - "{{ agent_content.foundation_opensearch_proxy.image }}"
+      - --service-port
+      - "{{ agent_content.foundation_opensearch_proxy.service_port | string }}"
+      - --upstream-host
+      - "{{ agent_content.foundation_opensearch_proxy.upstream_host }}"
+      - --upstream-port
+      - "{{ agent_content.foundation_opensearch_proxy.upstream_port | string }}"
+      - --manifest-file
+      - "{{ agent_content.foundation_opensearch_proxy.manifest_file }}"
+  when: agent_content.deploy_foundation_opensearch_proxy | bool
+
+- name: Create Foundation OpenSearch Vega catalog
+  ansible.builtin.command:
+    argv:
+      - "{{ agent_content.remote_root }}/anybackup-agent/foundation-opensearch-vega/install.sh"
+      - --catalog-name
+      - "{{ agent_content.foundation_opensearch_vega.catalog_name }}"
+      - --host
+      - "{{ agent_content.foundation_opensearch_vega.host }}"
+      - --port
+      - "{{ agent_content.foundation_opensearch_vega.port | string }}"
+      - --username
+      - "{{ agent_content.foundation_opensearch_vega.username }}"
+      - --password
+      - "{{ agent_content.foundation_opensearch_vega.password }}"
+      - --index-pattern
+      - "{{ agent_content.foundation_opensearch_vega.index_pattern }}"
+      - --biz-domain
+      - "{{ agent_content.business_domain }}"
+  environment:
+    FOUNDATION_OPENSEARCH_DISCOVER: "{{ '1' if agent_content.foundation_opensearch_vega.discover | bool else '0' }}"
+  no_log: true
+  when: agent_content.deploy_foundation_opensearch_vega | bool
+
+- name: Check kweaver-admin command for model deployment
+  ansible.builtin.command: which kweaver-admin
+  register: agent_content_kweaver_admin_check
+  changed_when: false
+  failed_when: false
+  when: agent_content.deploy_models | bool
+
+- name: Assert kweaver-admin command exists for model deployment
+  ansible.builtin.assert:
+    that:
+      - agent_content_kweaver_admin_check.rc == 0
+    fail_msg: "Required command kweaver-admin is missing for Agent model deployment."
+  when: agent_content.deploy_models | bool
+
+- name: Check packaged KWeaver model config exists
+  ansible.builtin.stat:
+    path: "{{ agent_content.model_config.package_dir }}"
+  delegate_to: localhost
+  become: false
+  register: local_agent_model_config
+  when: agent_content.deploy_models | bool
+
+- name: Assert packaged KWeaver model config exists
+  ansible.builtin.assert:
+    that:
+      - local_agent_model_config.stat.exists
+      - local_agent_model_config.stat.isdir
+    fail_msg: "Missing packaged KWeaver model config at {{ agent_content.model_config.package_dir }}."
+  when: agent_content.deploy_models | bool
+
+- name: Copy KWeaver model config to remote Agent content directory
+  ansible.builtin.copy:
+    src: "{{ agent_content.model_config.package_dir }}/"
+    dest: "{{ agent_content.model_config.remote_dir }}/"
+    mode: "0600"
+    directory_mode: "0700"
+  when: agent_content.deploy_models | bool
+
+- name: Deploy KWeaver LLM and small-model config
+  ansible.builtin.shell: |
+    set -euo pipefail
+    args=(
+      --config-dir "{{ agent_content.model_config.remote_dir }}"
+      --base-url "{{ agent_content.contextloader.base_url }}"
+      --biz-domain "{{ agent_content.business_domain }}"
+      --state-file "{{ agent_content.model_config.state_file }}"
+    )
+    {% if agent_content.kweaver_insecure | bool %}
+    args+=(--insecure)
+    {% endif %}
+    {% if agent_content.model_config.skip_small_models | bool %}
+    args+=(--skip-small-models)
+    {% endif %}
+    "{{ agent_content.remote_root }}/anybackup-agent/model-config/install.sh" "${args[@]}"
+  when: agent_content.deploy_models | bool
+
+- name: Create backup rule knowledge Vega catalog
+  ansible.builtin.command:
+    argv:
+      - "{{ agent_content.remote_root }}/anybackup-agent/backup-install/vega/install.sh"
+      - --host
+      - "{{ agent_content.backup_vega.host }}"
+      - --port
+      - "{{ agent_content.backup_vega.port | string }}"
+      - --database
+      - "{{ agent_content.backup_vega.database }}"
+      - --schema
+      - "{{ agent_content.backup_vega.schema }}"
+      - --username
+      - "{{ agent_content.backup_vega.username }}"
+      - --password
+      - "{{ agent_content.backup_vega.password }}"
+      - --engine
+      - "{{ agent_content.backup_vega.engine }}"
+      - --catalog-name
+      - "{{ agent_content.backup_vega.catalog_name }}"
+      - --biz-domain
+      - "{{ agent_content.business_domain }}"
+  environment:
+    VEGA_DISCOVER_CATALOG: "{{ '1' if agent_content.backup_vega.discover | bool else '0' }}"
+  no_log: true
+  when: agent_content.deploy_backup_vega | bool
+
+- name: Render backup BKN deploy-orchestrator config
+  ansible.builtin.template:
+    src: backup-bkn-deploy.yaml.j2
+    dest: "{{ generated_root }}/anybackup-agent-content-backup-bkn.yaml"
+    mode: "0644"
+  when: agent_content.deploy_backup_bkns | bool
+
+- name: Deploy backup BKNs with deploy-orchestrator
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -m
+      - deploy_orchestrator.main
+      - apply
+      - -f
+      - "{{ generated_root }}/anybackup-agent-content-backup-bkn.yaml"
+      - --state-file
+      - "{{ artifacts_root }}/anybackup-agent-content-state.json"
+  environment:
+    PYTHONPATH: "{{ agent_content.remote_root }}/deploy-orchestrator"
+  when: agent_content.deploy_backup_bkns | bool
+
+- name: Run recovery Vega data install script when enabled
+  ansible.builtin.command:
+    argv:
+      - "{{ agent_content.remote_root }}/anybackup-agent/recovery-install/vega/install.sh"
+      - --host
+      - "{{ agent_content.vega.host }}"
+      - --port
+      - "{{ agent_content.vega.port | string }}"
+      - --database
+      - "{{ agent_content.vega.database }}"
+      - --schema
+      - "{{ agent_content.vega.schema }}"
+      - --username
+      - "{{ agent_content.vega.username }}"
+      - --password
+      - "{{ agent_content.vega.password }}"
+      - --engine
+      - "{{ agent_content.vega.engine }}"
+      - --import-mode
+      - "{{ agent_content.vega.import_mode }}"
+      - --namespace
+      - "{{ agent_content.vega.namespace }}"
+      - --pod
+      - "{{ agent_content.vega.pod }}"
+      - --postgres-username
+      - "{{ agent_content.vega.postgres_username }}"
+      - --biz-domain
+      - "{{ agent_content.business_domain }}"
+  environment:
+    FOUNDATION_VEGA_ENABLED: "{{ '1' if agent_content.foundation_vega.enabled | bool else '0' }}"
+    FOUNDATION_DB_ENGINE: "{{ agent_content.foundation_vega.engine }}"
+    FOUNDATION_DB_HOST: "{{ agent_content.foundation_vega.host }}"
+    FOUNDATION_DB_PORT: "{{ agent_content.foundation_vega.port | string }}"
+    FOUNDATION_DB_USER: "{{ agent_content.foundation_vega.username }}"
+    FOUNDATION_DB_PASSWORD: "{{ agent_content.foundation_vega.password }}"
+    FOUNDATION_DB_SCHEMA: "{{ agent_content.foundation_vega.schema }}"
+  no_log: true
+  when: agent_content.deploy_recovery_vega | bool
+
+- name: Deploy recovery BKNs with existing installer
+  ansible.builtin.command:
+    argv:
+      - "{{ agent_content.remote_root }}/anybackup-agent/recovery-install/recovery-bkn/install.sh"
+      - --skip-login
+      - --biz-domain
+      - "{{ agent_content.business_domain }}"
+  when: agent_content.deploy_recovery_bkns | bool
+
+- name: Import ContextLoader toolbox
+  ansible.builtin.command:
+    argv:
+      - "{{ agent_content.remote_root }}/anybackup-agent/context-loader/install.sh"
+      - --base-url
+      - "{{ agent_content.contextloader.base_url }}"
+      - --biz-domain
+      - "{{ agent_content.business_domain }}"
+      - --mode
+      - "{{ agent_content.contextloader.import_mode }}"
+      - --toolbox-name
+      - "{{ agent_content.contextloader_skill_name }}"
+  environment:
+    KWEAVER_INSECURE: "{{ '1' if agent_content.kweaver_insecure | bool else '0' }}"
+    CONTEXTLOADER_SKIP_VERIFY: "{{ '1' if agent_content.contextloader.skip_verify | bool else '0' }}"
+    CONTEXTLOADER_TOOLBOX_FILES: "{{ agent_content.contextloader.toolbox_files | join(',') }}"
+  when: agent_content.deploy_contextloader | bool
+
+- name: Import Foundation CLI skills
+  ansible.builtin.shell: |
+    set -euo pipefail
+    args=(
+      --base-url "{{ agent_content.foundation_cli_skills.base_url }}"
+      --biz-domain "{{ agent_content.business_domain }}"
+      --skills-root "{{ agent_content.foundation_cli_skills.skills_root }}"
+      --state-file "{{ agent_content.foundation_cli_skills.state_file }}"
+      --source "{{ agent_content.foundation_cli_skills.source }}"
+      --kweaver-config "{{ agent_content.foundation_cli_skills.kweaver_config_path }}"
+      --resource-namespace "{{ agent_content.foundation_cli_skills.resource_namespace }}"
+    )
+    {% for skill_dir in agent_content.foundation_cli_skills.skill_dirs %}
+    args+=(--skill-dir "{{ skill_dir }}")
+    {% endfor %}
+    {% if agent_content.kweaver_insecure | bool %}
+    args+=(--insecure)
+    {% endif %}
+    {% if agent_content.foundation_cli_skills.publish | bool %}
+    args+=(--publish)
+    {% else %}
+    args+=(--no-publish)
+    {% endif %}
+    {% if not agent_content.foundation_cli_skills.ensure_publish_schema | bool %}
+    args+=(--skip-publish-schema-check)
+    {% endif %}
+    "{{ agent_content.remote_root }}/anybackup-agent/foundation-cli-skills/install.sh" "${args[@]}"
+  when: agent_content.deploy_foundation_cli_skills | bool
+
+- name: Check packaged Agent export config exists
+  ansible.builtin.stat:
+    path: "{{ agent_content.agent_export.package_dir }}/{{ agent_content.agent_export.file_name }}"
+  delegate_to: localhost
+  become: false
+  register: local_agent_export_config
+  when: agent_content.deploy_agent_export | bool
+
+- name: Assert packaged Agent export config exists
+  ansible.builtin.assert:
+    that:
+      - local_agent_export_config.stat.exists
+      - local_agent_export_config.stat.isreg
+    fail_msg: >-
+      Missing packaged Agent export config at
+      {{ agent_content.agent_export.package_dir }}/{{ agent_content.agent_export.file_name }}.
+  when: agent_content.deploy_agent_export | bool
+
+- name: Copy Agent export config to remote Agent content directory
+  ansible.builtin.copy:
+    src: "{{ agent_content.agent_export.package_dir }}/"
+    dest: "{{ agent_content.agent_export.remote_dir }}/"
+    mode: "0644"
+    directory_mode: "0755"
+  when: agent_content.deploy_agent_export | bool
+
+- name: Deploy Agents from exported KWeaver Agent config
+  ansible.builtin.shell: |
+    set -euo pipefail
+    args=(
+      --export-file "{{ agent_content.agent_export.remote_dir }}/{{ agent_content.agent_export.file_name }}"
+      --model-map "{{ agent_content.model_config.state_file }}"
+      --base-url "{{ agent_content.contextloader.base_url }}"
+      --biz-domain "{{ agent_content.business_domain }}"
+      --work-dir "{{ agent_content.agent_export.work_dir }}"
+    )
+    {% if agent_content.kweaver_insecure | bool %}
+    args+=(--insecure)
+    {% endif %}
+    {% if agent_content.publish_agents | bool %}
+    args+=(--publish)
+    {% else %}
+    args+=(--no-publish)
+    {% endif %}
+    "{{ agent_content.remote_root }}/anybackup-agent/agent-export/install.sh" "${args[@]}"
+  when: agent_content.deploy_agent_export | bool
+
+- name: Deploy recovery decision Agent with existing installer
+  ansible.builtin.shell: |
+    set -euo pipefail
+    args=(
+      --skip-login
+      --biz-domain "{{ agent_content.business_domain }}"
+    )
+    {% if not agent_content.publish_agents | bool %}
+    args+=(--no-publish)
+    {% endif %}
+    "{{ agent_content.remote_root }}/anybackup-agent/recovery-install/decision-agent/install.sh" "${args[@]}"
+  when:
+    - agent_content.deploy_recovery_agent | bool
+    - not agent_content.deploy_agent_export | bool
+
+- name: Print Agent content deployment summary
+  ansible.builtin.debug:
+    msg:
+      - "Agent content remote root: {{ agent_content.remote_root }}"
+      - "Business domain: {{ agent_content.business_domain }}"
+      - "Backup BKN deployment: {{ agent_content.deploy_backup_bkns }}"
+      - "Recovery Vega data deployment: {{ agent_content.deploy_recovery_vega }}"
+      - "Recovery BKN deployment: {{ agent_content.deploy_recovery_bkns }}"
+      - "ContextLoader toolbox import: {{ agent_content.deploy_contextloader }}"
+      - "Foundation CLI skill import: {{ agent_content.deploy_foundation_cli_skills }}"
+      - "KWeaver model config deployment: {{ agent_content.deploy_models }}"
+      - "Agent export deployment: {{ agent_content.deploy_agent_export }}"
+      - "Recovery Agent deployment: {{ agent_content.deploy_recovery_agent }}"
