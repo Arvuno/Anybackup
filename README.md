@@ -3,10 +3,15 @@
 <p align="center">
   <a href="https://github.com/anybackup-ai/Anybackup/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-SSPL--1.0-blue.svg" alt="License"></a>
   <a href="https://github.com/anybackup-ai/Anybackup/blob/main/VERSION.txt"><img src="https://img.shields.io/badge/version-9.0.0--alpha-orange.svg" alt="Version"></a>
+  <img src="https://img.shields.io/badge/status-alpha_preview-yellow.svg" alt="Status">
+  <img src="https://img.shields.io/badge/architecture-AI--Native-brightgreen.svg" alt="Architecture">
+  <img src="https://img.shields.io/badge/workload-MySQL_first-informational.svg" alt="Workload">
+  <img src="https://img.shields.io/badge/cloud--native-Kubernetes-326CE5.svg" alt="Cloud Native">
 </p>
 
 <p align="center">
-  <em>An AI-Native Data Resilience Platform — autonomous backup, recovery, and optimization. Built on an open-source model, delivering 35% lower TCO than traditional approaches.</em>
+  <strong>AI-Native Data Resilience Platform</strong><br>
+  Backup, recovery, and operational assurance through explainable agent workflows.
 </p>
 
 <p align="center">
@@ -15,258 +20,247 @@
 
 ---
 
-## 📖 Table of Contents
+## Product Positioning
 
-- [Overview](#overview)
-- [Key Capabilities](#key-capabilities)
-- [How It Works](#how-it-works)
-- [Architecture](#architecture)
-- [Getting Started](#getting-started)
-- [Repository Structure](#repository-structure)
-- [Community](#community)
-- [Contributing](#contributing)
-- [Related Projects](#related-projects)
-- [License & Third-Party Notices](#license--third-party-notices)
+Anybackup V9 is a more economical and intelligent data resilience platform. Built on an open-source business model, it helps customers achieve the data resilience their business requires. Powered by Anybackup Agent as an AI backup administrator, the platform enables autonomous backup, autonomous recovery, and autonomous optimization, reducing total cost of ownership by up to 35% and moving teams beyond reactive response.
 
 ---
 
-## Overview
+## Why Anybackup Exists
 
-Anybackup V9 is a more cost-effective, intelligent data resilience platform that leverages an open-source business model to deliver the data protection businesses actually need. Its AI backup administrator — powered by the Anybackup Agent — enables autonomous backup, autonomous recovery, and autonomous optimization, cutting total cost of ownership by 35% and replacing reactive firefighting with proactive assurance.
+Traditional backup systems are usually powerful after you already know what to click, which policy to configure, which recovery point to choose, and which risk you are about to create. That is exactly the problem.
 
-The platform is re-architected with AI-native thinking, centered on an intelligent agent. It follows a **three-in-one architecture: Collect · Execute · Decide** — where each layer plays a distinct role:
+Anybackup V9 is not trying to put a chatbot on top of backup software. It is rebuilding the backup and recovery experience around an AI-native workflow:
 
-- **Anybackup Agent** (Decide) — the thinking and planning agent: intent recognition, plan generation, risk assessment, approval enforcement, and full audit trail. Runs as SaaS.
-- **Anybackup Foundation** (Execute) — the execution engine: full/incremental/log backup, retention management, and recovery orchestration. Deployed in your data center.
-- **Anybackup Client** (Collect) — Per-workload data collectors on protected assets.
+1. Describe the data protection need in natural language.
+2. Let the Agent generate a structured plan with assumptions and risks.
+3. Keep the human in control for dangerous actions.
+4. Let Foundation execute the confirmed backup or recovery task.
+5. Keep the decision and execution trail auditable.
 
----
-
-## Key Capabilities
-
-- **Natural-language backup recommendations** — Describe your workload, receive 3 ranked backup plans sorted by RPO/RTO
-- **Flexible backup granularity** — Full/incremental/log backup at minute, daily, and weekly cadences, adapting to different workloads
-- **Application-aware routing** — When multiple instances exist under one resource, the system auto-identifies and guides you to pick the right target
-- **Candidate-to-decision loop** — Pick one of 3 plans; the system records your choice and closes the recommendation loop
-- **Failure-type recognition** — Recognizes instance crash, database drop, log damage, ransomware and other common fault types; recovery scope confirmed by the operator in conversation
-- **Granular recovery paths** — Instance-level, database-level, point-in-time, and log-file recovery
-- **Kubernetes-native deployment** — All Agent-side services and infrastructure deployed via Helm charts
-- **MySQL first release** — XtraBackup, real-time log, and multi-channel backup; more workloads on the way
+The goal is simple: make data resilience easier to operate without making it vague, magical, or unsafe.
 
 ---
 
-## How It Works
+## What This Repository Represents
 
-```
-  You speak                Agent reasons              Foundation executes
-  ─────────              ─────────────────          ──────────────────────
-  "Recommend a       →   Intent recognition      →  Queries current config
-   backup plan for       Plan generation              & Foundation capabilities
-   our database"         Risk assessment
-                              │
-                    ┌─────────┴─────────┐
-                    ▼                   ▼
-              3 candidate plans     You pick one
-              ranked by RPO/RTO     → Agent records,
-              & retention              dispatches to
-                                       Foundation
-```
+This is the open-source repository for **Anybackup V9**, the full platform direction:
 
-**Example — Backup recommendation:**
+| Product part | What it does |
+|---|---|
+| **Anybackup Agent** | Understands intent, generates backup and recovery plans, explains risk, manages confirmation, and keeps decision context |
+| **Anybackup Foundation** | Executes backup, recovery, retention, and data protection operations |
+| **Anybackup Client** | Connects protected workloads and provides workload-side data access |
 
-```
-You:   "Recommend a backup plan for our finance database."
-
-Agent: 3 candidates based on your environment:
-
-       A — Standard Protection
-       Weekly full + daily incremental, 90-day retention.
-
-       B — Low RPO (★ Recommended)
-       Weekly full + daily incremental + minute-level log backup,
-       5-year retention. Real-time log enabled.
-
-       C — Maximum Simplicity
-       Daily full only, 90-day retention.
-```
-
-**Example — Recovery from instance crash:**
-
-```
-You:   "Production database crashed — won't start. All databases unreachable."
-
-Agent: Instance-level failure.
-
-       Recovery: restore full instance to latest valid backup on original host.
-       ⚠️  This overwrites current data. [ Confirm ]  [ Cancel ]
-```
+Anybackup Agent is cloud-native and must be deployed on Kubernetes. Anybackup Foundation is host-deployed and runs on managed infrastructure outside the Agent Kubernetes runtime. This README keeps deployment details compact, but it should still respect the real product structure.
 
 ---
 
-## Architecture
+## Product Capabilities
 
-```
-  ┌───────────────────────────────────────────────────┐
-  │         Anybackup Agent  ·  SaaS                 │
-  │                                                   │
-  │  Intent Recognition · Plan Generation · Risk     │
-  │  Approval · Human Review · Audit Trail            │
-  └──────────────────────▬───────────────────────────┘
-                         │
-             skill + foundation-cli
-                         │
-                         ▼
-  ┌───────────────────────────────────────────────────┐
-  │      Anybackup Foundation  ·  Your Data Center   │
-  │                                                   │
-  │  Backup: Full · Incremental · Log · Retention    │
-  │  Recovery: Instance · Database · Point-in-Time    │
-  └──────────────────────▬───────────────────────────┘
-                         │
-                      Ingest
-                         │
-                         ▼
-  ┌───────────────────────────────────────────────────┐
-  │        Anybackup Client  ·  Protected Assets     │
-  │                                                   │
-  │  MySQL: XtraBackup · Real-time Log · Multi-      │
-  │  Channel Backup                                   │
-  │  More workloads on the way                        │
-  └───────────────────────────────────────────────────┘
-```
+### Natural-Language Backup Planning
+
+Describe a workload and Anybackup Agent turns the request into comparable backup plan candidates. The plan is not just a sentence: it should explain frequency, recovery point expectations, risk trade-offs, and why one option is recommended.
+
+### Recovery Plan Generation
+
+Describe a MySQL failure and the Agent turns it into a structured recovery plan. The plan identifies recovery scope, target point, execution path, and the risk of overwriting or rolling back data.
+
+### Human-Controlled Execution
+
+Any action that can damage production data must go through explicit human confirmation. Anybackup treats AI as a planning and decision-support layer, not as an unchecked operator.
+
+### Operational Query
+
+Administrators can ask about backup jobs, recovery progress, and platform state in natural language instead of hunting through raw system details first.
+
+### Audit-Friendly Workflow
+
+The conversation, generated plan, human decision, execution request, and result should remain traceable. This is essential for real backup and recovery operations, where "why did this happen" matters as much as "did it run."
 
 ---
 
-## Getting Started
+## Current Alpha Scope
 
-### Prerequisites
+`9.0.0-alpha` is an early public preview. It is focused, deliberately narrow, and meant to prove the core loop before the platform grows wider.
 
-- **Foundation**: deployed and accessible in your data center (contact us for deployment details)
-- **Kubernetes**: cluster running for Agent-side services
-- **Helm**: 3.x or later
-- **Target assets**: MySQL instances running with connectivity to Foundation
+**In scope now**
 
-### Installation
+- Single backup administrator workflow
+- MySQL-first backup and recovery scenarios
+- Backup recommendation from natural language
+- Recovery plan generation from failure descriptions
+- Human confirmation before risky execution
+- Foundation-backed execution path
+- Basic operational query experience
 
-**Step 1 — Deploy infrastructure services**
+**Not promised by this alpha**
+
+- Complete multi-tenant SaaS operations
+- Full enterprise role and permission model
+- Broad workload coverage beyond the first MySQL scenarios
+- Fully automated multi-step recovery without operator review
+- A polished production installer for every environment
+
+This boundary is intentional. A reliable AI-native data resilience platform should earn trust one operational loop at a time.
+
+---
+
+## Deployment Overview
+
+Anybackup V9 is deployed as three product layers. They are related, but they are not the same deployment target.
+
+### Anybackup Agent
+
+Anybackup Agent must run on Kubernetes. The integrated deployment entrypoint is [deploy/install.sh](./deploy/install.sh), which prepares the Kubernetes base environment, deploys the Agent runtime and services, imports Agent content, publishes the network entrypoint, and runs deployment verification.
+
+For a local single-node Agent evaluation:
 
 ```bash
-helm install v9-infra ./deploy/helm/v9-infra
+cd deploy
+./install.sh --local --foundation-self-ip <foundation-private-ip>
 ```
 
-This provisions Postgres, Redis, RabbitMQ, and OpenSearch for the Agent stack.
-
-**Step 2 — Deploy Agent services**
+For an inventory-driven Agent deployment:
 
 ```bash
-# Core agent engine
-helm install core-agent ./deploy/helm/core_agent
-
-# Conversation service
-helm install conversation ./deploy/helm/conversation
-
-# Auth service (Keycloak)
-helm install auth ./deploy/helm/auth
-
-# API Gateway (Traefik)
-helm install api-gateway ./deploy/helm/api_gateway
-
-# Web portal
-helm install web ./deploy/helm/web
+cd deploy
+./install.sh --inventory deploy_package/ansible/inventory.ini --foundation-self-ip <foundation-private-ip>
 ```
 
-**Step 3 — Install the CLI**
+Agent deployment profiles:
+
+| Profile | Purpose |
+|---|---|
+| `full` | Deploy the Kubernetes runtime, Agent services, Agent content, network entrypoint, and verification flow |
+| `kweaver-core-only` | Deploy only the core Agent runtime layer |
+| `agent-content-only` | Import or refresh Agent content against an existing Agent runtime |
+
+### Anybackup Foundation
+
+Anybackup Foundation is deployed on hosts, not inside the Agent Kubernetes cluster. The installer can coordinate Foundation through integrated, separated, or external modes:
 
 ```bash
-cd CLI
-go build -o foundation-cli ./cmd/foundation-cli
+cd deploy
+./install.sh --foundation-mode integrated --foundation-self-ip <foundation-private-ip>
 ```
 
-**Step 4 — Verify connectivity**
+Foundation-related options include `--skip-foundation`, `--foundation-mode`, `--foundation-package-path`, and `--foundation-install-root`. The source tree keeps a placeholder under `deploy/deploy_package/foundation/`; a real Foundation installation requires an available Foundation package or an already deployed external Foundation.
 
-```bash
-foundation-cli version
-```
+### Anybackup Client
 
-**Step 5 — Start a conversation**
+Anybackup Client is the workload-side access and collection layer. It connects protected assets to Foundation-backed protection and recovery workflows. In the current alpha repository, Client deployment is not exposed as a top-level standalone installer in the same way as Agent deployment. Client rollout should follow the Foundation and workload access flow for the target environment.
 
-Open the Agent Web Portal and describe your backup need in plain language, or use the CLI directly:
-
-```bash
-anybackup chat "Recommend a backup plan for my production database"
-```
-
-For detailed configuration options, see each chart's `values.yaml` in [`deploy/helm/`](./deploy/helm/).
+Review [deploy/deploy_package/README.md](./deploy/deploy_package/README.md) before using the deployment scripts in a shared or production-like environment.
 
 ---
 
-## Repository Structure
+## Example Workflows
 
+### Backup Recommendation
+
+```text
+User:
+Recommend a backup plan for our production MySQL database.
+
+Anybackup Agent:
+I found three candidate plans:
+
+1. Standard protection
+   Weekly full backup + daily incremental backup.
+
+2. Low-RPO protection
+   Weekly full backup + daily incremental backup + minute-level log backup.
+
+3. Simple protection
+   Daily full backup.
+
+Recommended: Low-RPO protection, because this database is production-facing
+and needs a shorter recovery point objective.
 ```
+
+### Recovery Plan
+
+```text
+User:
+The production MySQL instance crashed and all databases are unavailable.
+
+Anybackup Agent:
+This looks like an instance-level failure.
+
+Recommended recovery:
+- Scope: full MySQL instance
+- Target: latest valid backup point
+- Execution: restore through Anybackup Foundation
+- Risk: this may overwrite current data on the target host
+
+Please confirm before execution.
+```
+
+---
+
+## Architecture at a Glance
+
+```text
+Natural language request
+        |
+        v
+Anybackup Agent
+Intent, plan, risk, confirmation, audit context
+        |
+        v
+Anybackup Foundation
+Backup, recovery, retention, execution
+        |
+        v
+Anybackup Client
+Protected workload access and data collection
+```
+
+The platform design separates **decision**, **execution**, and **workload access**. That separation matters: AI can help decide and explain, Foundation executes confirmed operations, and Client-side capabilities connect the protected environment.
+
+---
+
+## Repository Map
+
+```text
 Anybackup/
-├── Agent/                     # AI decision layer
-│   ├── portal/                #   Web frontend (React)
-│   ├── service/               #   Backend services
-│   │   ├── conversation/      #     Conversation orchestration
-│   │   └── core_agent/        #     AI agent engine
-│   ├── skills/                #   Agent skills & AG-UI design patterns
-│   └── knowledge/             #   Knowledge networks (backup & recovery BKN)
-├── CLI/                       # foundation-cli — command-line tooling
-├── deploy/                    # Helm charts & deployment configuration
-│   └── helm/
-│       ├── v9-infra/          #   Infrastructure (Postgres, Redis, RabbitMQ, OpenSearch)
-│       ├── api_gateway/       #   API Gateway (Traefik)
-│       ├── auth/              #   Auth service (Keycloak)
-│       ├── conversation/      #   Conversation service
-│       ├── core_agent/        #   Core agent service
-│       └── web/               #   Web SPA
-├── LICENSE                    # SSPL-1.0
-├── NOTICE                     # Copyright notice
-└── VERSION.txt                # Current version
+├── Agent/          # AI interaction and decision layer
+├── CLI/            # Internal command-line tooling and control utilities
+├── deploy/         # Cloud-native deployment assets
+├── LICENSE         # SSPL-1.0
+├── NOTICE          # Copyright notice
+├── README.md       # English README
+├── README_zh.md    # Chinese README
+└── VERSION.txt     # Current version
 ```
+
+CLI and deployment assets exist because real platforms need engineering tools. They are not the main story of this README. The main story is the product capability: AI-native backup, recovery, and data resilience.
 
 ---
 
-## Community (coming soon)
+## Open Source Model
 
-- **Issues**: [GitHub Issues](https://github.com/anybackup-ai/Anybackup/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/anybackup-ai/Anybackup/discussions)
+Anybackup is released under [SSPL-1.0](./LICENSE). The project uses an open-source model to make the platform direction visible, inspectable, and extensible while preserving a sustainable path for enterprise-grade development.
+
+Third-party notices are maintained alongside distribution units where applicable. See [NOTICE](./NOTICE) and component-level `THIRD_PARTY_NOTICES.md` files for details.
+
+---
+
+## Community
+
+- Issues: [GitHub Issues](https://github.com/anybackup-ai/Anybackup/issues)
+- Discussions: [GitHub Discussions](https://github.com/anybackup-ai/Anybackup/discussions)
 
 ---
 
 ## Contributing
 
-We welcome contributions. Before submitting a pull request:
+Contributions are welcome as the project evolves. Before submitting a pull request:
 
 1. Open an issue to discuss the change or feature.
-2. Follow the repository coding conventions.
-3. Update relevant documentation and third-party notices if dependencies change.
-4. Ensure all tests pass.
+2. Keep changes aligned with the current alpha scope.
+3. Update relevant documentation and notices when behavior or dependencies change.
+4. Run checks for the component you modified.
 
-For contribution guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md) (coming soon).
-
----
-
-## Related Projects
-
-| Project | Relationship |
-|---|---|
-| **[Agent Portal](./Agent/portal/)** | Web frontend for conversation-based backup workflows |
-| **[foundation-cli](./CLI/)** | CLI for Foundation control-plane operations |
-
----
-
-## License & Third-Party Notices
-
-- Source code: [LICENSE](./LICENSE) (SSPL-1.0) with [NOTICE](./NOTICE)
-- Third-party components are declared per distribution unit:
-  - [`CLI/THIRD_PARTY_NOTICES.md`](./CLI/THIRD_PARTY_NOTICES.md) — Go dependencies (CLI binary)
-  - [`deploy/helm/v9-infra/THIRD_PARTY_NOTICES.md`](./deploy/helm/v9-infra/THIRD_PARTY_NOTICES.md) — Infrastructure (PostgreSQL, RabbitMQ, Redis, OpenSearch)
-  - [`deploy/helm/api_gateway/THIRD_PARTY_NOTICES.md`](./deploy/helm/api_gateway/THIRD_PARTY_NOTICES.md) — API Gateway (Traefik)
-  - [`deploy/helm/auth/THIRD_PARTY_NOTICES.md`](./deploy/helm/auth/THIRD_PARTY_NOTICES.md) — Auth (Keycloak)
-  - [`deploy/helm/conversation/THIRD_PARTY_NOTICES.md`](./deploy/helm/conversation/THIRD_PARTY_NOTICES.md) — Conversation Service
-  - [`deploy/helm/core_agent/THIRD_PARTY_NOTICES.md`](./deploy/helm/core_agent/THIRD_PARTY_NOTICES.md) — Core Agent Service
-  - [`deploy/helm/web/THIRD_PARTY_NOTICES.md`](./deploy/helm/web/THIRD_PARTY_NOTICES.md) — Web SPA
-  - [`Agent/portal/deploy/helm/agent-web/THIRD_PARTY_NOTICES.md`](./Agent/portal/deploy/helm/agent-web/THIRD_PARTY_NOTICES.md) — Agent Web portal
-
-When adding new images or upgrading dependencies, update the corresponding notice in the same commit.
+Detailed contribution guidelines will be expanded as the public development workflow matures.
