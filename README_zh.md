@@ -3,6 +3,10 @@
 <p align="center">
   <a href="https://github.com/anybackup-ai/Anybackup/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-SSPL--1.0-blue.svg" alt="License"></a>
   <a href="https://github.com/anybackup-ai/Anybackup/blob/main/VERSION.txt"><img src="https://img.shields.io/badge/version-9.0.0--alpha-orange.svg" alt="Version"></a>
+  <img src="https://img.shields.io/badge/status-alpha_preview-yellow.svg" alt="Status">
+  <img src="https://img.shields.io/badge/architecture-AI--Native-brightgreen.svg" alt="Architecture">
+  <img src="https://img.shields.io/badge/workload-MySQL_first-informational.svg" alt="Workload">
+  <img src="https://img.shields.io/badge/cloud--native-Kubernetes-326CE5.svg" alt="Cloud Native">
 </p>
 
 <p align="center">
@@ -204,4 +208,3 @@ Anybackup 基于 [SSPL-1.0](./LICENSE) 发布。项目采用开源模式，让�
 4. 运行与你修改组件相关的检查。
 
 详细贡献指南会随着公开开发流程成熟逐步补齐。
-

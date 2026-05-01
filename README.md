@@ -3,6 +3,10 @@
 <p align="center">
   <a href="https://github.com/anybackup-ai/Anybackup/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-SSPL--1.0-blue.svg" alt="License"></a>
   <a href="https://github.com/anybackup-ai/Anybackup/blob/main/VERSION.txt"><img src="https://img.shields.io/badge/version-9.0.0--alpha-orange.svg" alt="Version"></a>
+  <img src="https://img.shields.io/badge/status-alpha_preview-yellow.svg" alt="Status">
+  <img src="https://img.shields.io/badge/architecture-AI--Native-brightgreen.svg" alt="Architecture">
+  <img src="https://img.shields.io/badge/workload-MySQL_first-informational.svg" alt="Workload">
+  <img src="https://img.shields.io/badge/cloud--native-Kubernetes-326CE5.svg" alt="Cloud Native">
 </p>
 
 <p align="center">
@@ -205,4 +209,3 @@ Contributions are welcome as the project evolves. Before submitting a pull reque
 4. Run checks for the component you modified.
 
 Detailed contribution guidelines will be expanded as the public development workflow matures.
-
