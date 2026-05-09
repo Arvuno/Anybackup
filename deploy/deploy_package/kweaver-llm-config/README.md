@@ -40,8 +40,8 @@ cp models.json.template models.json
 - `api_model`：模型供应商侧的模型名称。
 - `api_key` 或 `api_key_env`：模型访问凭证。
 
-生产环境建议使用 `api_key_env`，部署前通过环境变量注入 key。Alpha 验证阶段可以直接在
-`models.json` 中填写 `api_key`，但 `models.json` 不能提交到代码仓库。
+可以直接在 `models.json` 中填写 `api_key`，也可以使用 `api_key_env`
+从环境变量读取。
 
 ## 小模型字段
 
@@ -103,9 +103,29 @@ __ANYBACKUP_RERANKER_API_KEY__
 部署脚本会在运行时从 `models.json` 或 `ANYBACKUP_RERANKER_API_KEY` 取值，并把 key 注入到
 adapter 代码中，再写入 KWeaver。不要把真实 key 写进 adapter 模板文件。
 
-## 推荐的凭证输入方式
+## 模型 API key 配置方式
 
-生产环境建议在运行一体化部署脚本前，通过隐藏输入设置环境变量：
+模型 API key 支持两种方式。
+
+方式一：直接填写在 `models.json` 中：
+
+```json
+{
+  "llm": {
+    "api_key": "<your-llm-api-key>"
+  },
+  "small_models": {
+    "embedding": {
+      "api_key": "<your-embedding-api-key>"
+    },
+    "reranker": {
+      "api_key": "<your-reranker-api-key>"
+    }
+  }
+}
+```
+
+方式二：在 `models.json` 中保留 `api_key_env`，并在运行一体化部署脚本前，通过隐藏输入设置环境变量：
 
 ```bash
 read -rsp "LLM API key: " ANYBACKUP_LLM_API_KEY; echo
@@ -129,18 +149,17 @@ export ANYBACKUP_RERANKER_API_KEY
 
 对应 embedding 和 reranker 也使用各自的 `api_key_env`。
 
-## 不要提交的文件
+两种方式任选一种即可。环境变量方式适合不希望把 key 写入配置文件的场景。
 
-以下文件属于客户本地部署输入或临时导出物，不要提交到代码仓库：
+## 文件说明
+
+部署前需要由用户本地生成并填写：
 
 ```text
 models.json
-llm/
-small-model/small-model-list.json
-small-model/small-model-adapter.txt
 ```
 
-仓库中只应该保留模板和说明文档：
+随安装包提供的模板文件：
 
 ```text
 README.md
@@ -150,8 +169,6 @@ small-model/small-model-adapter.txt.template
 
 ## 关于模型 ID
 
-客户不需要填写 KWeaver 生成的模型 ID，也不需要填写 Agent 导出环境里的旧模型 ID。
-
-KWeaver 创建大模型和小模型时不需要这些旧 ID。部署脚本会在模型创建或复用完成后生成内部映射，并在导入 Agent 时按当前“一个主 LLM”的规则自动替换模型引用。
+用户不需要填写 KWeaver 生成的模型 ID。按模板填写模型名称、接口地址、供应商模型名和凭证来源即可。
 
 一句话：用户部署前先把 `models.json.template` 复制成 `models.json`，填好模型信息和凭证来源，然后再执行一体化部署脚本。

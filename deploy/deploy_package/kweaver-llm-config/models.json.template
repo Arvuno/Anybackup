@@ -1,7 +1,7 @@
 {
   "_notes": [
     "Copy this file to models.json before running integrated deployment.",
-    "For alpha validation, api_key may be filled directly. For safer runs, leave api_key empty and export the api_key_env variable.",
+    "api_key may be filled directly. To keep keys out of this file, leave api_key empty and export the api_key_env variable.",
     "Small model kind=api uses KWeaver standard small-model API. Small model kind=adapter uses adapter_code_file for providers with non-standard rerank APIs."
   ],
   "_required_by_kweaver_tools": {
@@ -21,7 +21,6 @@
   },
   "version": 1,
   "llm": {
-    "role": "primary",
     "model_name": "CHANGE_ME_LLM_NAME",
     "model_series": "others",
     "api_url": "https://example.com/v1/chat/completions",
