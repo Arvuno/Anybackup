@@ -108,50 +108,21 @@ Anybackup Agent 采用云原生架构，只能部署在 Kubernetes 上。Anyback
 
 ## 部署概览
 
-Anybackup V9 按三层产品结构部署。三层彼此关联，但部署目标并不相同。
+Anybackup V9 推荐通过一体化部署入口安装。部署前先根据模板填写模型配置，然后执行 [deploy/install.sh](./deploy/install.sh)，并按安装程序提示输入必要凭证。
 
-### Anybackup Agent
-
-Anybackup Agent 只能运行在 Kubernetes 上。集成部署入口是 [deploy/install.sh](./deploy/install.sh)，它会准备 Kubernetes 基础环境，部署 Agent 运行时和业务服务，导入 Agent 内容，发布网络入口，并执行部署验证。
-
-本地单节点 Agent 体验：
+本地单节点安装示例：
 
 ```bash
 cd deploy
-./install.sh --local --foundation-self-ip <foundation-private-ip>
+./install.sh \
+  --local \
+  --foundation-mode integrated \
+  --foundation-self-ip <foundation-private-ip>
 ```
 
-使用 inventory 的 Agent 部署：
+安装程序会准备 Kubernetes 运行环境，部署 KWeaver、Foundation、FoundationClient、Anybackup Agent 内容和业务服务，并发布 Web 访问入口。
 
-```bash
-cd deploy
-./install.sh --inventory deploy_package/ansible/inventory.ini --foundation-self-ip <foundation-private-ip>
-```
-
-Agent 部署 profile：
-
-| Profile | 用途 |
-|---|---|
-| `full` | 部署 Kubernetes 运行时、Agent 服务、Agent 内容、网络入口和验证流程 |
-| `kweaver-core-only` | 只部署 Agent 核心运行时层 |
-| `agent-content-only` | 面向已有 Agent 运行时导入或刷新 Agent 内容 |
-
-### Anybackup Foundation
-
-Anybackup Foundation 只能部署在主机上，不运行在 Agent 的 Kubernetes 集群里。安装脚本可以通过 integrated、separated 或 external 模式编排 Foundation：
-
-```bash
-cd deploy
-./install.sh --foundation-mode integrated --foundation-self-ip <foundation-private-ip>
-```
-
-Foundation 相关参数包括 `--skip-foundation`、`--foundation-mode`、`--foundation-package-path` 和 `--foundation-install-root`。源码树中的 `deploy/deploy_package/foundation/` 当前只是 Foundation 安装包占位目录；真实 Foundation 安装需要可用的 Foundation 安装包，或已经部署好的外部 Foundation。
-
-### Anybackup Client
-
-Anybackup Client 是工作负载侧接入和采集层，用于把被保护资产连接到 Foundation 承接的保护与恢复流程。当前 alpha 仓库里，Client 部署没有像 Agent 部署那样暴露为顶层独立安装器。Client 推出应遵循目标环境下的 Foundation 与工作负载接入流程。
-
-用于共享环境或类生产环境前，请先阅读 [deploy/deploy_package/README.md](./deploy/deploy_package/README.md)。
+详细部署步骤、模型配置和凭证输入方式见 [deploy/DEPLOYMENT_zh.md](./deploy/DEPLOYMENT_zh.md)。
 
 ---
 

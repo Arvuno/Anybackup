@@ -108,50 +108,21 @@ This boundary is intentional. A reliable AI-native data resilience platform shou
 
 ## Deployment Overview
 
-Anybackup V9 is deployed as three product layers. They are related, but they are not the same deployment target.
+Anybackup V9 is installed through the integrated deployment entrypoint. Before running the installer, prepare the model configuration from the provided template, then run [deploy/install.sh](./deploy/install.sh) and follow the installer prompts for required credentials.
 
-### Anybackup Agent
-
-Anybackup Agent must run on Kubernetes. The integrated deployment entrypoint is [deploy/install.sh](./deploy/install.sh), which prepares the Kubernetes base environment, deploys the Agent runtime and services, imports Agent content, publishes the network entrypoint, and runs deployment verification.
-
-For a local single-node Agent evaluation:
+Local single-node installation example:
 
 ```bash
 cd deploy
-./install.sh --local --foundation-self-ip <foundation-private-ip>
+./install.sh \
+  --local \
+  --foundation-mode integrated \
+  --foundation-self-ip <foundation-private-ip>
 ```
 
-For an inventory-driven Agent deployment:
+The installer prepares the Kubernetes runtime, deploys KWeaver, Foundation, FoundationClient, Anybackup Agent content, and business services, then publishes the Web access entrypoint.
 
-```bash
-cd deploy
-./install.sh --inventory deploy_package/ansible/inventory.ini --foundation-self-ip <foundation-private-ip>
-```
-
-Agent deployment profiles:
-
-| Profile | Purpose |
-|---|---|
-| `full` | Deploy the Kubernetes runtime, Agent services, Agent content, network entrypoint, and verification flow |
-| `kweaver-core-only` | Deploy only the core Agent runtime layer |
-| `agent-content-only` | Import or refresh Agent content against an existing Agent runtime |
-
-### Anybackup Foundation
-
-Anybackup Foundation is deployed on hosts, not inside the Agent Kubernetes cluster. The installer can coordinate Foundation through integrated, separated, or external modes:
-
-```bash
-cd deploy
-./install.sh --foundation-mode integrated --foundation-self-ip <foundation-private-ip>
-```
-
-Foundation-related options include `--skip-foundation`, `--foundation-mode`, `--foundation-package-path`, and `--foundation-install-root`. The source tree keeps a placeholder under `deploy/deploy_package/foundation/`; a real Foundation installation requires an available Foundation package or an already deployed external Foundation.
-
-### Anybackup Client
-
-Anybackup Client is the workload-side access and collection layer. It connects protected assets to Foundation-backed protection and recovery workflows. In the current alpha repository, Client deployment is not exposed as a top-level standalone installer in the same way as Agent deployment. Client rollout should follow the Foundation and workload access flow for the target environment.
-
-Review [deploy/deploy_package/README.md](./deploy/deploy_package/README.md) before using the deployment scripts in a shared or production-like environment.
+For detailed deployment steps, model configuration, and credential input methods, see [deploy/DEPLOYMENT_en.md](./deploy/DEPLOYMENT_en.md).
 
 ---
 
