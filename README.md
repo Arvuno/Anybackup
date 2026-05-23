@@ -20,6 +20,11 @@
 
 ---
 
+
+## Quick Start
+
+See the [official documentation](https://github.com/anybackup-ai/Anybackup) for installation and usage instructions.
+
 ## Product Positioning
 
 Anybackup V9 is a more economical and intelligent data resilience platform. Built on an open-source business model, it helps customers achieve the data resilience their business requires. Powered by Anybackup Agent as an AI backup administrator, the platform enables autonomous backup, autonomous recovery, and autonomous optimization, reducing total cost of ownership by up to 35% and moving teams beyond reactive response.
