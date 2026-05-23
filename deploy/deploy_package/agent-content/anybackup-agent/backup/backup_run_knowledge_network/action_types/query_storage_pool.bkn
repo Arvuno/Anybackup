@@ -1,0 +1,48 @@
+---
+type: action_type
+id: query_storage_pool
+name: 查询存储池
+tags: [存储池, 配置查询]
+action_type: add
+---
+
+## ActionType: 查询存储池
+
+根据输入的存储服务 ID 查询当前运行态中的存储池，并直接返回面向用户展示的存储池结果。
+
+当前 Action 面向存储池目录查询场景。输入 `storage_service_id` 后，应先定位该存储服务，再沿 `storage_pool_to_storage_service` 关系筛选属于该存储服务的存储池。结果展示标签应优先使用对象 `storage_pool` 的 `Display Name`，并将容量类字段按业务语义组织为“存储空间大小”“存储剩余空间”。
+
+除返回全部存储池外，本 Action 还支持通过输入参数控制结果选择策略。例如可通过 `result_mode = max_remaining_space` 只返回“存储剩余空间最大”的存储池；若存在多条并列最大值，则按 `存储池ID` 升序返回第一条，保证结果稳定。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| storage_service |
+
+### Affect Object
+
+| Affect Object | Affect Description |
+|---------------|--------------------|
+| storage_pool | 返回属于目标存储服务的存储池列表 |
+
+### Trigger Condition
+
+
+### Action Source
+
+| Type | BoxID | ToolID | McpID | ToolName |
+|------|-------|--------|-------|----------|
+
+### Parameter Binding
+
+| Name | Type | Source | Operation | ValueFrom | Value | Description |
+|------|------|--------|-----------|-----------|-------|-------------|
+| storage_service_id | string | input |  |  |  | 存储服务ID，必填。 |
+| result_mode | string | input |  |  | all | 结果模式，可选；支持 `all`、`max_remaining_space`，默认 `all`。 |
+
+### Schedule
+
+| Type | Expression |
+|------|------------|
+| EVENT | on_request |

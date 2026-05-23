@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.worktrees/
+.env
+service.run.log
+service.stderr.log
+service.stdout.log
+logs/
+*.tar

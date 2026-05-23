@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: backup_config_to_storage_pool
+name: 备份配置使用存储池
+tags: []
+---
+
+## RelationType: 备份配置使用存储池
+
+描述通用备份配置与存储池之间的关联关系，来源于 `backup_config.storage_pool_id`。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| backup_config | storage_pool | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| storage_pool_id | id |

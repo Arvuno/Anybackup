@@ -1,0 +1,4 @@
+---
+- name: Run KWeaver core-only validation cleanup
+  ansible.builtin.include_role:
+    name: internal/cleanup_core_validation

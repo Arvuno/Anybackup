@@ -1,0 +1,111 @@
+{
+    "package_name": "AnyBackupServer",
+    "package_version": "9.0.0-alpha1",
+    "platform": "Linux_el7_x64",
+    "build_target": "Release",
+    "language": "zh_CN",
+    "product_type": "ABNormal",
+    "build_number": "1",
+    "package_branch": "AB9.0.0",
+    "directories": {
+        "console_py": "../../consolePy",
+        "console_go": "../../consoleGo",
+        "other_services": "../../foundationLibrary",
+        "client": "../../client",
+        "storage": "../../proplyd"
+    },
+    "go_services_config": {
+        "service_base_path": "service",
+        "package_subpath": "ci/package/Linux_el7_x64/Release",
+        "package_name": "latest.tar.gz"
+    },
+    "other_services_config": {
+        "base_path": "third-service",
+        "binary_dir": "binary",
+        "package_name": "latest.tar.gz"
+    },
+    "client_services_config": {
+        "app_base_path": "app",
+        "package_subpath": "ci/package/Linux_el7_x64/Release",
+        "target_dir": "data/softdownload/Linux_el7_x64",
+        "special_names": {
+            "BasicRunner": "Basic"
+        }
+    },
+    "storage_config": {
+        "package_subpath": "package/Linux_el8_x64/Release",
+        "package_name": "openProplyd-9.0.0-Linux_el8_x64.tar.gz"
+    },
+    "py_services": [
+        {
+            "name": "AuthService",
+            "source_path": "service/service_AuthService/ci/package/Linux_el7_x64/Release"
+        },
+        {
+            "name": "CommonService",
+            "source_path": "service/service_CommonService/ci/package/Linux_el7_x64/Release"
+        },
+        {
+            "name": "ClusterService",
+            "source_path": "service/service_ClusterService/ci/package/Linux_el7_x64/Release"
+        },
+        {
+            "name": "ClusterMgmService",
+            "source_path": "service/service_ClusterMgmService/ci/package/Linux_el7_x64/Release"
+        },
+        {
+            "name": "DeploymentService",
+            "source_path": "service/service_DeploymentService/ci/package/Linux_el7_x64/Release"
+        },
+        {
+            "name": "KMSService",
+            "source_path": "service/service_KMSService/ci/package/Linux_el7_x64/Release"
+        },
+        {
+            "name": "SvrMgmService",
+            "source_path": "service/service_SvrMgmService/ci/package/Linux_el7_x64/Release"
+        }
+    ],
+    "go_services": [
+        "AgentDiscoveryService",
+        "AuditService",
+        "CNResourceManagementService",
+        "CommonResourceMgmService",
+        "HyperBackupMgmService",
+        "HyperBackupMountWorkerService",
+        "HyperBackupSyncWorkerService",
+        "HyperBackupWorkerService",
+        "HyperJobMgmService",
+        "HyperJobWorkerService",
+        "HyperKMSService",
+        "HyperManagedResourceService",
+        "HyperRCEService",
+        "HyperRCMService",
+        "HyperSLAMgmService",
+        "HyperSLAWorkerService",
+        "LocatesMgmService",
+        "LogService",
+        "MultiStorageSvcMgmService",
+        "SLAService",
+        "TimeSeriesDataService",
+        "SAStorageService",
+        "SAThriftService",
+        "SAManageService",
+        "SAConveyService",
+        "SANativeTapeService",
+        "SAObjectStorageService"
+    ],
+    "other_services": [
+        "ConsulService",
+        "DBService",
+        "EtcdService",
+        "KADService",
+        "KMCService",
+        "KeyService",
+        "NATSService",
+        "NETKADService",
+        "OpenSearchService",
+        "WebService"
+    ],
+    "client_services": []
+}

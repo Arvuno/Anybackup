@@ -1,0 +1,33 @@
+keycloak:
+  replicaCount: 1
+  image:
+    registry: docker.aityp.com
+    repository: image/docker.io/keycloak/keycloak
+    tag: 26.5.1
+    pullPolicy: IfNotPresent
+  database:
+    vendor: postgres
+    host: "{{ v9_infra.postgres.service_name }}.{{ v9_infra.namespace }}.svc.cluster.local"
+    port: 5432
+    name: "{{ v9_postgres_database }}"
+    schema: public
+    username: "{{ v9_postgres_username }}"
+  secrets:
+    create: true
+    name: auth-service-keycloak-secrets
+    adminPassword: {{ auth_service_admin_password | to_json }}
+    databasePassword: {{ v9_postgres_password | to_json }}
+  http:
+    enabled: true
+    port: 8080
+    managementPort: 9000
+    relativePath: /api/auth_service/v1
+  service:
+    type: ClusterIP
+    ports:
+      http: 80
+      management: 9000
+
+ingressRoute:
+  enabled: true
+  ingressClass: traefik

@@ -1,0 +1,33 @@
+---
+type: object_type
+id: app_backup_capability
+name: 应用备份能力
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 应用备份能力
+
+用于描述某类应用支持的备份能力事实，确保推荐阶段不会输出应用本身不支持的备份计划条目或应用配置。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 469cddce-2d11-4f93-9d1c-2b9e23461d42 | app_backup_capability |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 能力ID | string | 应用备份能力唯一标识。 | id |
+| app_object_type | 应用类型 | string | 应用对象类型，例如 mysql、oracle、file。 | app_object_type |
+| capability | 能力 | string | 应用支持的能力，例如 完全备份、增量备份、日志备份、即时合成备份。 | capability |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: app_object_type
+Incremental Key:

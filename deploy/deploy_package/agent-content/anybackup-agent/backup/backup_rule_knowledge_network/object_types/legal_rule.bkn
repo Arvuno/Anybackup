@@ -1,0 +1,42 @@
+---
+type: object_type
+id: legal_rule
+name: 法规要求
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 法规要求
+
+描述影响备份方案选择的法规约束对象。法规规则通过关系类型显式关联到 `backup_solution`，用于提供合规约束和评分依据。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | legal_rule | legal_rule |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 法规规则ID | string | 法规规则唯一标识。 | id |
+| name | 法规规则名称 | string | 法规规则名称。 | name |
+| industry_type | 行业类型 | string | 适用行业类型，如金融、政府、能源、未定义。 | industry_type |
+| legal_requirement | 法规要求 | string | 具体法规要求文本。 | legal_requirement |
+| data_type | 数据类型 | string | 法规针对的数据类型。 | data_type |
+| data_level | 数据分级属性 | string | 法规针对的数据分级属性。 | data_level |
+| max_rpo_minutes | 最大RPO分钟 | integer | 法规允许的最大 RPO，单位分钟。 | max_rpo_minutes |
+| max_rto_minutes | 最大RTO分钟 | integer | 法规允许的最大 RTO，单位分钟。 | max_rto_minutes |
+| min_retention_days | 最小保留天数 | integer | 法规要求的最小保留天数。 | min_retention_days |
+| compliance_scope | 合规范围 | string | 法规约束作用范围，例如生产、归档、审计留存。 | compliance_scope |
+| severity | 法规权重 | integer | 法规在综合评估中的权重。 | severity |
+| description | 说明 | text | 法规约束说明。 | description |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

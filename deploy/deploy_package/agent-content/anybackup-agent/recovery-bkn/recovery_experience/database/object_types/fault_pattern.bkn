@@ -1,0 +1,41 @@
+---
+type: object_type
+id: fault_pattern
+name: 故障模式
+tags: [Database, 恢复, 经验知识, 故障模式]
+---
+
+## ObjectType: 故障模式
+
+故障模式对象定义可复用的故障知识主数据，用于表达数据库恢复场景中的典型故障类别、症状特征、影响范围和处理提示。它回答的是“这是什么故障”，是恢复认知链的入口对象。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| patternId | 模式ID | string | 故障模式唯一标识。 | patternId |
+| name | 模式名称 | string | 故障模式名称，如业务宕机、数据丢失、勒索病毒。 | name |
+| appType | 应用类型 | string | 数据库应用类型，如 MySQL、Oracle、PostgreSQL、SQLServer。 | appType |
+| faultCategory | 故障分类 | string | 故障一级分类，如 service_outage、data_loss、data_corruption、ransomware、configuration_error。 | faultCategory |
+| affectedGranularity | 影响粒度 | string | 常见影响范围，如 instance_or_database、instance_or_database_or_table、instance_or_database_or_table_or_log。 | affectedGranularity |
+| symptomKeywords | 症状关键词 | text | 用于匹配故障描述的症状关键词集合。 | symptomKeywords |
+| intentKeywords | 意图关键词 | text | 用户表达恢复意图时常见的关键词集合。 | intentKeywords |
+| requiredClarification | 必要澄清项 | text | 在进入能力认知和正式策略选择前必须先补齐的信息，如发生时间、影响范围、实例还是库。 | requiredClarification |
+| disposalHint | 处理提示 | text | 对该故障模式的补充说明和处理提示。 | disposalHint |
+| severityBaseline | 严重度基线 | string | 该故障模式默认严重度。 | severityBaseline |
+| enabled | 是否启用 | boolean | 是否参与故障识别。 | enabled |
+
+### Keys
+
+Primary Keys: patternId
+Display Key: name
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | ExperienceBKNDB.public.fault_pattern | ExperienceBKNDB.public.fault_pattern |

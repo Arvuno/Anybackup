@@ -1,0 +1,41 @@
+---
+type: object_type
+id: protected_object
+name: 保护对象
+tags: []
+---
+
+## ObjectType: 保护对象
+
+用于描述已经纳入保护范围的对象实例，记录对象名称、所属系统、资源类型以及最近一次备份状态。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 3909e55a-f046-4273-8af3-f371e8170183 | protect_object |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| last_backup_size | 最后一次备份数据量 | integer | 上次备份数据量 | last_backup_size |
+| protect_type | 保护对象类型 | binary | 保护对象类型;0:默认;1:对应文件智能目录归档 | protect_type |
+| time_point_mode | 时间点模式 | integer | 时间点模型 | time_point_mode |
+| name | 保护对象名称 | string | 保护对象名称 | name |
+| original_name | 原始名称 | string | 保护对象初始名称 | original_name |
+| production_system_id | 生产系统ID | string | 生产系统唯一标识 | production_system_id |
+| last_backup_time | 最后一次备份时间 | integer | 上次备份时间 | last_backup_time |
+| production_resource_type | 生产资源类型 | string | 生产资源类型 | production_resource_type |
+| production_resource_id | 来源生产资源ID | string | 与 production_resource.productionResourceId 对应 | production_resource_id |
+| app_type | 应用类型 | string | 应用类型 | app_type |
+| backup_config_id | 公共配置ID | string | 备份配置唯一标识 | backup_config_id |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: production_resource_id
+Display Key: name
+Incremental Key:

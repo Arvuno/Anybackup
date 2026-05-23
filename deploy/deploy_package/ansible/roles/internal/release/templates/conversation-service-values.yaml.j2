@@ -1,0 +1,51 @@
+replicaCount: 1
+
+image:
+  registry: ""
+  repository: conversation-service
+  tag: "{{ v9_services_image_tag }}"
+  pullPolicy: IfNotPresent
+
+config:
+  serviceName: conversation_service
+  serviceVersion: 0.1.0
+  apiPrefix: /api/conversation_service/v1
+  backgroundWorkersEnabled: true
+  authContextSource: api_gateway_x_user
+  authUserHeaderName: X-User
+  coreAgentServiceName: core_agent_service
+  logLevel: INFO
+  logFormat: json
+
+secrets:
+  create: true
+  name: conversation-service-secrets
+  databaseUrl: {{ v9_runtime.postgres_async_url | to_json }}
+  rabbitmqUrl: {{ v9_runtime.rabbitmq_url | to_json }}
+  redisUrl: {{ v9_runtime.redis_url | to_json }}
+  coreAgentServiceToken: {{ core_agent_service_token | to_json }}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: http
+
+ingressRoute:
+  enabled: true
+  ingressClass: traefik
+  middlewares:
+    - name: api-gateway-service-api-gateway-service-auth
+      namespace: "{{ deployment_namespace }}"
+
+containerPort: 8000
+
+probes:
+  startup:
+    enabled: true
+    path: /healthz
+  readiness:
+    enabled: true
+    path: /readyz
+  liveness:
+    enabled: true
+    path: /healthz

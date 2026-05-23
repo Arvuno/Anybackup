@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: backup_solution_use_retention_plan
+name: 方案使用保留计划
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: 方案使用保留计划
+
+通过 `backup_solution.id` 匹配 `retention_plan.backup_solution_id`，将备份方案关联到其唯一数据保留计划。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| backup_solution | retention_plan | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| id | backup_solution_id |

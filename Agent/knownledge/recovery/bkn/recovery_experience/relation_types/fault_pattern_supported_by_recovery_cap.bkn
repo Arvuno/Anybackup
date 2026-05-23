@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: fault_pattern_supported_by_recovery_cap
+name: 故障模式受恢复能力支撑
+tags: [Database, 恢复, 经验知识, 恢复能力]
+---
+
+## RelationType: 故障模式受恢复能力支撑
+
+故障模式通过 `appType` 关联对应数据库类型的恢复能力，用于表达识别故障后，需要先理解该类数据库在 Foundation 下具备哪些恢复能力。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| fault_pattern | recovery_capability | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| appType | appType |

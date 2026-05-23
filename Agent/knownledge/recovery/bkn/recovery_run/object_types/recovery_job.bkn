@@ -1,0 +1,39 @@
+---
+type: object_type
+id: recovery_job
+name: 恢复作业
+tags: [MySQL, 恢复, 作业, 执行实例]
+---
+
+## ObjectType: 恢复作业
+
+恢复作业对象，是恢复任务执行后生成的执行实例，包括正在执行的和已经执行完处于历史状态的作业。记录了恢复操作的执行过程和结果数据。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| jobId | 作业ID | string | 作业唯一标识符（去掉横杠的UUID） | jobId |
+| objectId | 对象ID | string | 关联的数据保护对象ID（外键） | objectId |
+| clientId | 客户端ID | string | 关联的客户端ID（外键） | clientId |
+| speed | 恢复速度 | string | 恢复速度 | speed |
+| startTime | 开始时间 | integer | 恢复开始执行的时间（时间戳） | startTime |
+| endTime | 完成时间 | integer | 恢复完成执行的时间（时间戳） | endTime |
+| completedData | 完成数据量 | integer | 恢复写入的数据量（字节） | completedData |
+| sendSize | 发送数据量 | integer | 恢复作业执行过程中从服务器存储中读出来的数据量（字节） | sendSize |
+| businessType | 业务类型 | integer | 业务类型（10=数据恢复，11=挂载恢复，12=细粒度恢复） | businessType |
+
+### Keys
+
+Primary Keys: jobId
+Display Key: jobId
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | job | job |

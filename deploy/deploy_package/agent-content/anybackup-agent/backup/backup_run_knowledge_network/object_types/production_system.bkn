@@ -1,0 +1,37 @@
+---
+type: object_type
+id: production_system
+name: 生产系统
+tags: []
+---
+
+## ObjectType: 生产系统
+
+用于描述生产系统主数据，作为生产资源与保护对象归属关系中的上层系统实体。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | resource_info | resource_info |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| type | 系统类型 | integer | 生产资源类型(文件系统，MySql数据库，VMware平台等) | type |
+| node_os_type | 节点操作系统类型 | integer | 节点操作系统类型 | node_os_type |
+| id | 生产系统ID | string | 唯一标识 | id |
+| status | 系统状态 | integer | 生产资源状态 | status |
+| origin_id | 原始生产系统ID | string | 用于数据复制场景 | origin_id |
+| parent_id | 父生产系统ID | string | 云平台租户所属的云平台 | parent_id |
+| name | 生产系统名称 | string | 生产系统名称 | name |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

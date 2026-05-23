@@ -1,0 +1,72 @@
+---
+- name: Ensure remote KWeaver deploy bundle parent exists
+  ansible.builtin.file:
+    path: "{{ kweaver.remote_deploy_dir | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy vendored KWeaver deploy bundle to remote host
+  ansible.builtin.copy:
+    src: "{{ kweaver_offline.deploy_bundle_dir }}/"
+    dest: "{{ kweaver.remote_deploy_dir }}/"
+
+- name: Ensure KWeaver config directory exists
+  ansible.builtin.file:
+    path: "{{ kweaver.config_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Install KWeaver platform dependencies from vendored deploy bundle
+  ansible.builtin.command:
+    argv:
+      - ./deploy.sh
+      - "{{ item }}"
+      - install
+  args:
+    chdir: "{{ kweaver.remote_deploy_dir }}"
+  environment:
+    CONF_DIR: "{{ kweaver.config_dir }}"
+    CONFIG_YAML_PATH: "{{ kweaver.config_path }}"
+    CONFIRM_ACCESS_ADDRESS: "false"
+    KWEAVER_ACCESS_ADDRESS: "https://{{ ansible_host | default('127.0.0.1') }}:{{ ingress.managed_nodeport.https_node_port }}"
+    INGRESS_NGINX_HOSTNETWORK: "false"
+    INGRESS_NGINX_CLASS: "{{ ingress.class }}"
+    INGRESS_NGINX_HTTP_PORT: "{{ ingress.managed_nodeport.http_node_port | string }}"
+    INGRESS_NGINX_HTTPS_PORT: "{{ ingress.managed_nodeport.https_node_port | string }}"
+    AUTO_INSTALL_INGRESS_NGINX: "true"
+  loop:
+    - ingress-nginx
+    - mariadb
+    - redis
+    - zookeeper
+    - kafka
+    - opensearch
+  loop_control:
+    label: "{{ item }}"
+
+- name: Generate KWeaver runtime config from vendored deploy bundle
+  ansible.builtin.command:
+    argv:
+      - ./deploy.sh
+      - config
+      - generate
+  args:
+    chdir: "{{ kweaver.remote_deploy_dir }}"
+  environment:
+    CONF_DIR: "{{ kweaver.config_dir }}"
+    CONFIG_YAML_PATH: "{{ kweaver.config_path }}"
+    CONFIRM_ACCESS_ADDRESS: "false"
+    KWEAVER_ACCESS_ADDRESS: "https://{{ ansible_host | default('127.0.0.1') }}:{{ ingress.managed_nodeport.https_node_port }}"
+    INGRESS_NGINX_HOSTNETWORK: "false"
+    INGRESS_NGINX_CLASS: "{{ ingress.class }}"
+    INGRESS_NGINX_HTTP_PORT: "{{ ingress.managed_nodeport.http_node_port | string }}"
+    INGRESS_NGINX_HTTPS_PORT: "{{ ingress.managed_nodeport.https_node_port | string }}"
+
+- name: Wait for KWeaver resource namespace running pods to become ready
+  ansible.builtin.shell: |
+    set -euo pipefail
+    pods="$(kubectl get pods -n {{ kweaver.resource_namespace }} --field-selector=status.phase=Running -o jsonpath='{range .items[*]}pod/{.metadata.name} {end}')"
+    if [ -n "$pods" ]; then
+      kubectl wait -n {{ kweaver.resource_namespace }} --for=condition=Ready $pods --timeout={{ verify.timeout }}
+    fi
+  changed_when: false

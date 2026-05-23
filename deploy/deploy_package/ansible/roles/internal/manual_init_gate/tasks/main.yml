@@ -1,0 +1,7 @@
+---
+- name: Stop when the deprecated manual KWeaver init gate is invoked
+  ansible.builtin.fail:
+    msg: >-
+      The old manual KWeaver initialization gate is no longer part of the default release flow.
+      The packaged installer now expects the formal online KWeaver Core deployment path instead of
+      minimum-install plus manual follow-up steps.

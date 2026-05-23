@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Design Change Handler"
+  short_description: "Update impacted design docs after design changes."
+  default_prompt: "Use $design-doc-change-handler to update the affected design documents under docs/00_设计文档."

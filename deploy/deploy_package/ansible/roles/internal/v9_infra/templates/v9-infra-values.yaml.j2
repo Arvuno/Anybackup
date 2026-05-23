@@ -1,0 +1,30 @@
+global:
+  imagePullPolicy: {{ v9_infra.image_pull_policy }}
+  defaultStorageClass: {{ v9_infra.default_storage_class | quote }}
+
+namespace: {{ v9_infra.namespace }}
+postgres:
+  image: {{ v9_infra.postgres.image }}
+  storage: {{ v9_infra.postgres.storage }}
+  storageClass: {{ v9_infra.postgres.storage_class | quote }}
+  secretName: {{ v9_infra.postgres.secret_name }}
+  serviceName: {{ v9_infra.postgres.service_name }}
+rabbitmq:
+  image: {{ v9_infra.rabbitmq.image }}
+  storage: {{ v9_infra.rabbitmq.storage }}
+  storageClass: {{ v9_infra.rabbitmq.storage_class | quote }}
+  secretName: {{ v9_infra.rabbitmq.secret_name }}
+  serviceName: {{ v9_infra.rabbitmq.service_name }}
+redis:
+  image: {{ v9_infra.redis.image }}
+  storage: {{ v9_infra.redis.storage }}
+  storageClass: {{ v9_infra.redis.storage_class | quote }}
+  secretName: {{ v9_infra.redis.secret_name }}
+  serviceName: {{ v9_infra.redis.service_name }}
+opensearch:
+  image: {{ v9_infra.opensearch.image }}
+  initImage: {{ v9_infra.opensearch.init_image }}
+  storage: {{ v9_infra.opensearch.storage }}
+  storageClass: {{ v9_infra.opensearch.storage_class | quote }}
+  serviceName: {{ v9_infra.opensearch.service_name }}
+  protocol: {{ v9_infra.opensearch.protocol | quote }}

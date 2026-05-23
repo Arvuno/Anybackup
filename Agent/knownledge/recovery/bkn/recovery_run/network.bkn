@@ -1,0 +1,18 @@
+---
+type: knowledge_network
+id: mysql_recovery_run
+name: MySQL数据库恢复运行知识网络
+tags: [MySQL, 数据库, 恢复, 灾备, 备份]
+business_domain: mysql_recovery
+---
+
+# MySQL数据库恢复知识网络
+
+MySQL数据库多粒度自主恢复能力知识网络，支持实例级恢复、库级恢复、日志文件恢复等多种恢复粒度。
+
+## Network Overview
+
+- **ObjectTypes** (object_types/): protection_object, storage_service, storage_pool, timepoint_copy, recovery_datasource, client, recovery_task, recovery_job, availability_verification
+- **RelationTypes** (relation_types/): timepoint_belongs_object, timepoint_belongs_pool, pool_belongs_service, datasource_belongs_timepoint, task_specifies_client, task_specifies_timepoint, task_specifies_datasource, job_belongs_object, job_specifies_client, verification_applies_to_app_type 
+- **ActionTypes** (action_types/): query_protection_objects, query_storage_services, query_storage_pools, query_timepoint_copies, query_recovery_datasources, query_clients, execute_recovery_task, query_recovery_jobs, execute_availability_verification
+- **ConceptGroups** (concept_groups/): 

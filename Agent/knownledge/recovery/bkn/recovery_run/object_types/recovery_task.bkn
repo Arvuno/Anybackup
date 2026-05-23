@@ -1,0 +1,47 @@
+---
+type: object_type
+id: recovery_task
+name: 恢复任务
+tags: [MySQL, 恢复, 任务, 执行]
+---
+
+## ObjectType: 恢复任务
+
+恢复任务对象是 `execute_recovery_task` 动作使用的参数契约对象。它不映射 Foundation 中稳定存在的实体表，而是承载恢复执行所需的输入参数。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| recovery_taskId | 恢复任务ID | string | 恢复任务唯一标识符（去掉横杠的UUID） | recovery_taskId |
+| clientId | 客户端ID | string | 关联的客户端ID（外键） | clientId |
+| clientIp | 客户端IP | string | 恢复目标客户端IP | clientIp |
+| timePointId | 时间点ID | string | 关联的时间点副本ID（外键） | timePointId |
+| timestamp | 时间戳 | integer | 选择的时间点的时间戳（毫秒） | timestamp |
+| storageServiceId | 存储服务ID | string | 时间点所属的存储服务ID（外键） | storageServiceId |
+| storagePoolId | 存储池ID | string | 时间点所属的存储池ID（外键） | storagePoolId |
+| recovery_datasourceId | 恢复数据源ID | string | 关联的恢复数据源ID（可选，不指定则使用整个时间点副本） | recovery_datasourceId |
+| recovery_granularity | 恢复粒度 | string | 恢复粒度（instance/database/log） | recovery_granularity |
+| recovery_destination | 恢复目的地 | string | 恢复目的地（original/remote） | recovery_destination |
+| recovery_method | 恢复方式 | string | 恢复方式（fastest/latest/specified_time） | recovery_method |
+| recovery_type | 恢复类型 | string | 恢复类型（data/mount） | recovery_type |
+| parallel | 通道数 | integer | 并发恢复线程数（默认8，上限64） | parallel |
+| recovery_user | 恢复用户 | string | 指定恢复用户 | recovery_user |
+| overwrite | 覆盖现有数据库 | boolean | 是否覆盖现有数据库 | overwrite |
+| stop_service | 停止服务 | boolean | 恢复前是否停止数据库服务 | stop_service |
+| update_credentials | 更新密码 | boolean | 恢复后是否更新用户名/密码 | update_credentials |
+| online | 恢复后联机 | boolean | 恢复后是否使数据库联机 | online |
+
+### Keys
+
+Primary Keys: recovery_taskId
+Display Key: recovery_taskId
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|

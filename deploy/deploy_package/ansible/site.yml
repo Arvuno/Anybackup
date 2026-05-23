@@ -1,0 +1,41 @@
+---
+- name: Deploy AnyBackup Agent release package
+  hosts: v9_alpha
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Resolve package root
+      ansible.builtin.set_fact:
+        package_root: "{{ playbook_dir | dirname }}"
+      tags: ["always"]
+
+  roles:
+    - role: cleanup-core-validation
+      tags: ["cleanup-core-validation"]
+    - role: prepare
+      tags: ["prepare"]
+    - role: k8s-cluster
+      tags: ["k8s-cluster"]
+    - role: network-preflight
+      tags: ["network-preflight"]
+    - role: load-images
+      tags: ["load-images", "deploy-services"]
+    - role: deploy-services
+      tags: ["deploy-services"]
+    - role: deploy-agent-content
+      tags: ["deploy-agent-content", "never"]
+    - role: app-services
+      tags: ["app-services", "never"]
+    - role: publish-network
+      tags: ["publish-network"]
+    - role: verify-release
+      tags: ["verify"]
+    - role: sandbox-overlay
+      tags: ["sandbox-overlay", "never"]
+
+    # Optional wrapper roles kept for directory compatibility with the release spec.
+    - role: init-kweaver
+      tags: ["init-kweaver", "never"]
+    - role: install-foundation
+      tags: ["install-foundation", "never"]

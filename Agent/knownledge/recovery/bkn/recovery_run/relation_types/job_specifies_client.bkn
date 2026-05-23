@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: job_specifies_client
+name: 恢复作业明确客户端
+tags: [MySQL, 恢复, 作业, 客户端]
+---
+
+## RelationType: 恢复作业明确客户端
+
+恢复作业对象通过 clientId 字段关联到客户端对象，明确恢复作业在哪个客户端上接收和写入恢复数据。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| recovery_job | client | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| clientId | clientId |

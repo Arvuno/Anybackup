@@ -1,0 +1,34 @@
+image:
+  registry: {{ kweaver_core_compat.deploy_web.image_registry | quote }}
+accessAddress:
+  host: {{ kweaver_core_compat_effective_host | quote }}
+  port: {{ (((kweaver_core_compat_config.accessAddress | default({})).port | default(kweaver_core_compat.deploy_web.access_address.port)) | int) }}
+  scheme: {{ (((kweaver_core_compat_config.accessAddress | default({})).scheme | default(kweaver_core_compat.deploy_web.access_address.scheme)) | string) | quote }}
+  path: {{ (((kweaver_core_compat_config.accessAddress | default({})).path | default(kweaver_core_compat.deploy_web.access_address.path)) | string) | quote }}
+depServices:
+  class-443:
+    ingressClass: {{ ((((kweaver_core_compat_config.depServices | default({})).get('class-443', {})).ingressClass | default(kweaver.ingress_class)) | string) | quote }}
+  rds:
+    dbName: {{ kweaver_core_compat.deploy_web.database | quote }}
+    host: {{ (((kweaver_core_compat_config.depServices | default({})).rds | default({})).host | default('')) | quote }}
+    password: {{ (((kweaver_core_compat_config.depServices | default({})).rds | default({})).password | default('')) | quote }}
+    port: {{ ((((kweaver_core_compat_config.depServices | default({})).rds | default({})).port | default(3306)) | int) }}
+    system_id: {{ (((kweaver_core_compat_config.depServices | default({})).rds | default({})).system_id | default('')) | quote }}
+    user: {{ (((kweaver_core_compat_config.depServices | default({})).rds | default({})).user | default('')) | quote }}
+  redis:
+    connectType: {{ (((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectType | default('')) | quote }}
+    enableSSL: {{ (((kweaver_core_compat_config.depServices | default({})).redis | default({})).enableSSL | default(false)) | bool }}
+    connectInfo:
+      host: {{ ((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).host | default('')) | quote }}
+      masterGroupName: {{ ((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).masterGroupName | default('')) | quote }}
+      masterHost: {{ ((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).masterHost | default('')) | quote }}
+      masterPort: {{ (((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).masterPort | default(0)) | int) }}
+      password: {{ ((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).password | default('')) | quote }}
+      port: {{ (((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).port | default(0)) | int) }}
+      sentinelHost: {{ ((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).sentinelHost | default('')) | quote }}
+      sentinelPassword: {{ ((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).sentinelPassword | default('')) | quote }}
+      sentinelPort: {{ (((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).sentinelPort | default(0)) | int) }}
+      sentinelUsername: {{ ((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).sentinelUsername | default('')) | quote }}
+      slaveHost: {{ ((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).slaveHost | default('')) | quote }}
+      slavePort: {{ (((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).slavePort | default(0)) | int) }}
+      username: {{ ((((kweaver_core_compat_config.depServices | default({})).redis | default({})).connectInfo | default({})).username | default('')) | quote }}

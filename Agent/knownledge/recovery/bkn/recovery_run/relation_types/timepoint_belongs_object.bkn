@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: timepoint_belongs_object
+name: 时间点副本属于数据保护对象
+tags: [MySQL, 恢复, 时间点, 对象]
+---
+
+## RelationType: 时间点副本属于数据保护对象
+
+时间点副本对象通过 objectId 字段关联到数据保护对象，表示该时间点副本属于哪个数据保护对象。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| timepoint_copy | protection_object | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| objectId | objectId |

@@ -1,0 +1,18 @@
+---
+type: knowledge_network
+id: backup_rule_knowledge_network
+name: 备份规则知识网络
+tags: [备份方案执行, 备份方案推荐]
+branch: main
+business_domain: bd_public
+---
+
+# 备份规则知识网络
+
+面向备份方案推荐的新知识网络。该网络以 `backup_solution` 作为推荐结果的中心对象，并将多个 `backup_window`、多个 `backup_plan` 和一个 `retention_plan` 统一纳入方案内部。`basic_config_rule` 与 `app_config_rule` 采用“配置规则项”建模，不再作为单个模板对象直连到方案，而是在推荐阶段基于应用类型、数据量、RPO、窗口和数据级别等上下文匹配并汇总多条规则；同一候选方案在最终输出时按 `config_category` 去重，保证同一配置类别不会重复出现。`backup_plan`、`backup_window`、`retention_plan` 的字段表达与规格定义中的参数项保持一致。`recommendation_policy` 负责为候选备份方案提供行业级默认值、法规缩圈与评分权重，并通过显式关系表达其与候选方案的适配范围。`app_output_rule` 用于定义不同应用类型的最终输出方案结构，并通过显式关系表达不同应用方案的输出归属，避免在 action 中硬编码 mysql、oracle、file 等应用的展示层级。应用类型、数据类型、数据量、RPO、RTO、备份窗口和行业类型仍作为外部输入参数；规则对象统一作为约束来源，通过显式关系收敛候选备份方案。
+
+## Network Overview
+
+- **ObjectTypes** (object_types/): app_backup_capability, app_config_rule, app_output_rule, app_rule, backup_plan, backup_solution, backup_window, basic_config_rule, data_rule, legal_rule, recommendation_policy, retention_plan, rpo_rule
+- **RelationTypes** (relation_types/): app_capability_ct_backup_plan, app_config_rule_ct_backup_solution, app_output_rule_fmt_backup_solution, app_rule_ct_backup_solution, backup_solution_use_backup_plan, backup_solution_use_backup_window, backup_solution_use_retention_plan, basic_config_rule_ct_backup_solution, data_rule_ct_backup_solution, legal_rule_ct_backup_solution, recommendation_policy_ct_backup_solution, rpo_rule_ct_backup_solution
+- **ConceptGroups** (concept_groups/): backup_solution_recommendation

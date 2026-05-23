@@ -1,0 +1,149 @@
+package cmd_test
+
+import (
+	"bytes"
+	"strings"
+	"testing"
+
+	foundationcmd "foundation-cli/cmd"
+	"foundation-cli/internal/platform/output"
+)
+
+func TestVersionCommand_PrintsStableJSON(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	root := foundationcmd.NewRootCommand(foundationcmd.Dependencies{
+		Streams: output.Streams{
+			Stdout: &stdout,
+			Stderr: &stderr,
+		},
+		Version: foundationcmd.BuildVersionInfo("dev"),
+	})
+
+	root.SetArgs([]string{"version"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	const wantStdout = "{\"cliName\":\"foundation-cli\",\"cliVersion\":\"dev\",\"supportedTargetVersions\":[\"9.0.9.0\"],\"defaultTargetVersion\":\"9.0.9.0\"}\n"
+	if got := stdout.String(); got != wantStdout {
+		t.Fatalf("stdout = %q, want %q", got, wantStdout)
+	}
+
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
+	}
+}
+
+func TestRootCommand_RegistersRemoteCommands(t *testing.T) {
+	root := foundationcmd.NewRootCommand(foundationcmd.Dependencies{
+		Streams: output.Streams{
+			Stdout: &bytes.Buffer{},
+			Stderr: &bytes.Buffer{},
+		},
+		Version: foundationcmd.BuildVersionInfo("dev"),
+	})
+
+	tests := [][]string{
+		{"api"},
+		{"policy", "list"},
+		{"policy", "backup", "detail"},
+		{"policy", "backup", "create"},
+		{"policy", "copy", "detail"},
+		{"policy", "copy", "create"},
+		{"policy", "delete"},
+		{"protect", "policy", "bind"},
+		{"protect", "policy", "bind-batch"},
+		{"protect", "policy", "bind-list"},
+	{"protect", "policy", "batch-unbind"},
+	{"protect", "backup", "start"},
+	{"protect", "backup", "batch-start"},
+	{"timepoint", "list"},
+	{"timepoint", "clean", "start"},
+	{"protect", "config-policy", "get"},
+		{"protect", "config-policy", "get-by-app-type"},
+		{"protect", "storage-pool", "auto-select"},
+		{"protect", "backup-config", "set"},
+		{"protect", "backup-config", "get"},
+		{"protect", "client", "list"},
+		{"job", "list"},
+		{"job", "backup-detail"},
+		{"job", "detail"},
+		{"job", "sync-detail"},
+		{"job", "logs"},
+		{"job", "business-types"},
+		{"job", "app-types"},
+		{"host", "list"},
+		{"host", "object", "create"},
+		{"host", "object", "list"},
+		{"host", "backup-config"},
+		{"host", "object", "detail"},
+		{"host", "backup-config", "detail"},
+		{"host", "restore", "start"},
+		{"client", "deploy"},
+		{"client", "deploy-history"},
+		{"client", "list"},
+		{"client", "runner", "list"},
+		{"client", "runner-types"},
+		{"client", "deploy-config", "list"},
+		{"client", "deploy-config", "create"},
+		{"client", "deploy-log", "list"},
+		{"vmware", "object", "list"},
+		{"vmware", "object", "info"},
+		{"vmware", "datasource", "get"},
+		{"vmware", "backup-detail"},
+		{"vmware", "recovery-detail"},
+		{"vmware", "backup-config", "create"},
+		{"vmware", "backup-config", "detail"},
+		{"vmware", "restore-config", "create"},
+		{"vmware", "timepoint", "metadata"},
+		{"mysql", "object", "list"},
+		{"mysql", "object", "get"},
+		{"mysql", "backup-config", "create"},
+		{"mysql", "backup-config", "detail"},
+		{"mysql", "app-backup-config", "detail"},
+		{"mysql", "datasource", "backup"},
+		{"mysql", "datasource", "recovery"},
+		{"mysql", "recovery", "range"},
+		{"mysql", "recovery-config", "detail"},
+		{"mysql", "restore-config", "create"},
+		{"mysql", "timepoint", "list"},
+		{"mysql", "backup-detail"},
+		{"mysql", "recovery-detail"},
+	}
+
+	for _, path := range tests {
+		if _, _, err := root.Find(path); err != nil {
+			t.Fatalf("Find(%v) error = %v", path, err)
+		}
+	}
+
+	if _, _, err := root.Find([]string{"protect", "timepoint", "list"}); err == nil {
+		t.Fatal("Find(protect timepoint list) error = nil, want unknown command")
+	}
+
+	if _, _, err := root.Find([]string{"protect", "clean", "start"}); err == nil {
+		t.Fatal("Find(protect clean start) error = nil, want unknown command")
+	}
+
+	root.SetArgs([]string{"sla", "binding", "list"})
+	if err := root.Execute(); err == nil {
+		t.Fatal("Execute(sla binding list) error = nil, want unknown command")
+	} else if !strings.Contains(err.Error(), "unknown command") {
+		t.Fatalf("Execute(sla binding list) error = %v, want unknown command", err)
+	}
+
+	if cmd, remaining, err := root.Find([]string{"job", "vmware", "backup-detail"}); err != nil {
+		t.Fatalf("Find(job vmware backup-detail) error = %v", err)
+	} else if cmd.Name() != "job" || len(remaining) != 2 {
+		t.Fatalf("Find(job vmware backup-detail) = (%s, %v), want unresolved under job", cmd.Name(), remaining)
+	}
+
+	if cmd, remaining, err := root.Find([]string{"job", "mysql", "recovery-detail"}); err != nil {
+		t.Fatalf("Find(job mysql recovery-detail) error = %v", err)
+	} else if cmd.Name() != "job" || len(remaining) != 2 {
+		t.Fatalf("Find(job mysql recovery-detail) = (%s, %v), want unresolved under job", cmd.Name(), remaining)
+	}
+}

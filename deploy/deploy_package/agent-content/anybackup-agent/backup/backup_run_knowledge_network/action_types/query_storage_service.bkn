@@ -1,0 +1,46 @@
+---
+type: action_type
+id: query_storage_service
+name: 查询存储服务
+tags: [存储服务, 配置查询]
+action_type: add
+---
+
+## ActionType: 查询存储服务
+
+根据输入条件查询当前运行态中的存储服务，并直接返回面向用户展示的存储服务结果。
+
+当前 Action 主要面向存储服务目录查询场景。若未提供筛选条件，则返回全部存储服务；若提供 `storage_service_id` 或 `storage_service_name`，则按输入做精确过滤。结果展示标签应优先使用对象 `storage_service` 的 `Display Name`，即“存储服务ID”“存储服务名称”“存储服务类型”，不直接暴露底层字段名。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| storage_service |
+
+### Affect Object
+
+| Affect Object | Affect Description |
+|---------------|--------------------|
+| storage_service | 返回符合筛选条件的存储服务主数据 |
+
+### Trigger Condition
+
+
+### Action Source
+
+| Type | BoxID | ToolID | McpID | ToolName |
+|------|-------|--------|-------|----------|
+
+### Parameter Binding
+
+| Name | Type | Source | Operation | ValueFrom | Value | Description |
+|------|------|--------|-----------|-----------|-------|-------------|
+| storage_service_id | string | input |  |  |  | 存储服务ID，可选。 |
+| storage_service_name | string | input |  |  |  | 存储服务名称，可选。 |
+
+### Schedule
+
+| Type | Expression |
+|------|------------|
+| EVENT | on_request |

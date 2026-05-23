@@ -1,0 +1,41 @@
+---
+type: object_type
+id: backup_window
+name: 备份窗口
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 备份窗口
+
+用于表达备份方案中的窗口条目。一个备份方案下允许存在多个窗口条目，每条记录只表达一个窗口片段，并使用统一参数定义：窗口类型、开始星期、结束星期、开始时间、结束时间、最大速度。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 6491e40b-95da-451f-85e4-2ce28c0946c6 | backup_window |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 窗口ID | string | 备份窗口条目唯一标识。 | id |
+| backup_solution_id | 备份方案ID | string | 当前窗口条目所属的备份方案。 | backup_solution_id |
+| name | 窗口名称 | string | 窗口条目名称。 | name |
+| window_type | 窗口类型 | string | 窗口类型，例如 不限速备份、限速备份、禁止备份。 | window_type |
+| start_weekday | 开始星期 | string | 窗口开始星期，例如 周一至周日。 | start_weekday |
+| end_weekday | 结束星期 | string | 窗口结束星期，例如 周一至周日。 | end_weekday |
+| start_time | 开始时间 | time | 窗口开始时间。 | start_time |
+| end_time | 结束时间 | time | 窗口结束时间。 | end_time |
+| max_speed_mib | 最大速度MiB/s | integer | 窗口类型为限速备份时的最大速度，单位 MiB/s。 | max_speed_mib |
+| priority | 优先级 | integer | 当多个窗口条目重叠时的优先级，数值越小优先级越高。 | priority |
+| description | 说明 | text | 备份窗口条目说明。 | description |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: protected_object_gen_mysql_config
+name: 保护对象生成MySQL配置
+tags: []
+---
+
+## RelationType: 保护对象生成MySQL配置
+
+描述生产资源完成备份配置并生成保护对象后，若该对象对应 MySQL 资源，则会进一步生成 MySQL 专属备份配置。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| protected_object | mysql_backup_config | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| production_resource_id | object_id |

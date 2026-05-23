@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: prod_system_to_parent_system
+name: 生产系统属于父生产系统
+tags: []
+---
+
+## RelationType: 生产系统属于父生产系统
+
+描述生产系统之间的层级关系，来源于 `resource_info.parent_id`。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| production_system | production_system | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| parent_id | id |

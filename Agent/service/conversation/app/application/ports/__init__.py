@@ -1,0 +1,1 @@
+"""Application outbound port definitions."""

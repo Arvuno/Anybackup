@@ -1,0 +1,44 @@
+---
+type: object_type
+id: recovery_capability
+name: 恢复能力
+tags: [Database, 恢复, 经验知识, 恢复能力]
+---
+
+## ObjectType: 恢复能力
+
+恢复能力对象用于定义特定备份软件在特定数据库类型上的恢复能力边界，表达支持的恢复粒度、恢复技术以及原机、异机、定点、日志恢复等能力约束。它回答的不是“当前有哪些实时资源”，而是“在当前 vendor 与数据库类型组合下，理论上能如何恢复”。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| capabilityId | 能力ID | string | 恢复能力唯一标识。 | capabilityId |
+| name | 能力名称 | string | 恢复能力名称。 | name |
+| vendor | 备份软件 | string | 备份软件厂商或平台，如 AISHU、Veeam、NBU、Commvault。 | vendor |
+| appType | 应用类型 | string | 数据库应用类型，如 MySQL、Oracle、PostgreSQL、SQLServer。 | appType |
+| supportedGranularity | 支持恢复粒度 | text | 支持的恢复粒度集合，如 instance、database、log_file、table_indirect。 | supportedGranularity |
+| supportedTechnique | 支持恢复技术 | text | 支持的恢复技术类型集合，如 restore、mount。 | supportedTechnique |
+| supportedMode | 支持恢复模式 | text | 支持的恢复模式集合，如 shortest_time、latest_state、specified_time。 | supportedMode |
+| supportsOriginalRestore | 支持原机恢复 | boolean | 是否支持原机恢复。 | supportsOriginalRestore |
+| supportsRemoteRestore | 支持异机恢复 | boolean | 是否支持异机恢复。 | supportsRemoteRestore |
+| supportsPointInTimeRestore | 支持定点恢复 | boolean | 是否支持定点恢复。 | supportsPointInTimeRestore |
+| supportsLogRestore | 支持日志恢复 | boolean | 是否支持日志恢复。 | supportsLogRestore |
+| tableRecoveryMode | 表级恢复模式 | string | 表级恢复模式，如 indirect_only、not_supported。 | tableRecoveryMode |
+| capabilitySummary | 能力摘要 | text | 对恢复能力边界的摘要说明。 | capabilitySummary |
+| enabled | 是否启用 | boolean | 是否启用。 | enabled |
+
+### Keys
+
+Primary Keys: capabilityId
+Display Key: name
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | recovery_capability | recovery_capability |

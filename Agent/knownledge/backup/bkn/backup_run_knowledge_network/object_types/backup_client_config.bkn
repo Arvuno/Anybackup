@@ -1,0 +1,35 @@
+---
+type: object_type
+id: backup_client_config
+name: 备份客户端配置
+tags: []
+---
+
+## ObjectType: 备份客户端配置
+
+用于描述保护对象公共配置下绑定的客户端配置项，包括关联客户端、所属区域和公共配置标识。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 76155897-438d-4586-830f-4f7a2d8e2ee3 | backup_client |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| client_name | 客户端名称 | string | 客户端名称 | client_name |
+| id | 客户端配置ID | string | 唯一标识 | id |
+| region_id | 区域ID | string | 区域唯一标识 | region_id |
+| config_id | 公共配置ID | string | 公共配置唯一标识 | config_id |
+| client_id | 客户端ID | string | 客户端唯一标识 | client_id |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: client_name
+Incremental Key:

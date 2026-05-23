@@ -1,0 +1,9 @@
+strategyTemplateId,name,vendor,appType,faultPatternId,recoveryGranularity,destinationType,recoveryMethod,requiresRecovery,strategySummary,riskBaseline,approvalRequired,enabled
+mysql_instance_latest_restore,MySQL实例级最新点恢复模板,AISHU,MySQL,mysql_service_unavailable,instance,original,latest_state,true,实例故障默认优先原机恢复到最新状态；该操作可能覆盖生产实例，执行前必须明确告知高风险并获得用户显式确认。,high,true,true
+mysql_database_latest_restore,MySQL库级最新点恢复模板,AISHU,MySQL,mysql_service_unavailable,database,original,latest_state,true,当确认仅某个或某些数据库不可用时，默认优先原机库级恢复到最新状态；该操作可能覆盖生产数据库，执行前必须明确告知高风险并获得用户显式确认。,high,true,true
+mysql_instance_before_fault_restore,MySQL实例级定点恢复模板,AISHU,MySQL,mysql_data_loss,instance,original,specified_time,true,当确认数据丢失范围为实例级时，需先明确故障发生时间，再选择故障前最近可用时间点默认恢复到原机实例；若原机 client 离线或不可用，再转异机恢复。,high,true,true
+mysql_database_before_fault_restore,MySQL库级定点恢复模板,AISHU,MySQL,mysql_data_loss,database,original,specified_time,true,当确认数据丢失范围为数据库级时，需先明确故障发生时间，再选择故障前最近可用时间点默认恢复到原机生产库；若原机 client 离线或不可用，再转异机恢复。,high,true,true
+mysql_table_indirect_specified_time_restore,MySQL表级间接定点恢复模板,AISHU,MySQL,mysql_data_loss,database,remote,specified_time,true,当确认问题范围为表级且需要间接恢复时，需先明确故障发生时间，再选择故障前最近可用时间点进行异机库级恢复，随后导出目标表或受影响对象并回灌。,high,true,true
+mysql_log_file_time_range_restore,MySQL日志文件时间范围恢复模板,AISHU,MySQL,mysql_data_loss,log_file,original,specified_time,true,当确认数据丢失范围为日志时间段或需要恢复 binlog 文件时，按指定时间范围默认恢复归档日志文件到原机目标路径；若原机 client 离线或不可用，再转异机恢复。,high,true,true
+mysql_ransomware_isolated_restore,MySQL勒索场景隔离恢复模板,AISHU,MySQL,mysql_ransomware,instance,remote,specified_time,true,勒索场景必须恢复到网络隔离环境，并优先恢复到受影响前的安全时间点。,high,true,true
+mysql_configuration_no_restore,MySQL配置错误免恢复模板,AISHU,MySQL,mysql_configuration_error,none,none,none,false,配置错误默认不恢复，先做配置修正。,low,false,true

@@ -1,0 +1,43 @@
+---
+type: object_type
+id: recovery_strategy_template
+name: 恢复策略模板
+tags: [Database, 恢复, 经验知识, 策略模板]
+---
+
+## ObjectType: 恢复策略模板
+
+恢复策略模板对象定义可复用的恢复方案主数据，用于表达在已识别故障和已知能力边界下可采用的恢复方案。它负责定义恢复粒度、目标位置、恢复方法及是否真的需要恢复，而不承载会话中的临时推理结果。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| strategyTemplateId | 模板ID | string | 恢复策略模板唯一标识。 | strategyTemplateId |
+| name | 模板名称 | string | 策略模板名称。 | name |
+| vendor | 备份软件 | string | 当前策略模板适用的备份软件平台。本期默认按 MySQL + AISHU 设计，并为未来扩展预留字段。 | vendor |
+| appType | 应用类型 | string | 数据库应用类型，如 MySQL、Oracle、PostgreSQL、SQLServer。 | appType |
+| faultPatternId | 故障模式ID | string | 关联的故障模式标识。 | faultPatternId |
+| recoveryGranularity | 恢复粒度 | string | 推荐恢复粒度，如 instance、database、log_file、none。 | recoveryGranularity |
+| destinationType | 恢复目标 | string | 推荐恢复目标，如 original、remote、none。 | destinationType |
+| recoveryMethod | 恢复方式 | string | 推荐恢复方式，如 shortest_time、latest_state、specified_time、none。 | recoveryMethod |
+| requiresRecovery | 是否需要恢复 | boolean | 是否真的需要进入恢复流程。 | requiresRecovery |
+| strategySummary | 策略摘要 | text | 对策略模板的高层说明。 | strategySummary |
+| riskBaseline | 风险基线 | string | 该模板的默认风险级别。 | riskBaseline |
+| approvalRequired | 是否需要审批 | boolean | 使用该模板是否默认需要审批。 | approvalRequired |
+| enabled | 是否启用 | boolean | 是否参与策略选择。 | enabled |
+
+### Keys
+
+Primary Keys: strategyTemplateId
+Display Key: name
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | ExperienceBKNDB.public.recovery_strategy_template | ExperienceBKNDB.public.recovery_strategy_template |

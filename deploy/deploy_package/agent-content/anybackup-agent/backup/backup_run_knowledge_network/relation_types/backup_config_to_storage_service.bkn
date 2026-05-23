@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: backup_config_to_storage_service
+name: 备份配置使用存储服务
+tags: []
+---
+
+## RelationType: 备份配置使用存储服务
+
+描述通用备份配置与存储服务之间的关联关系，来源于 `backup_config.storage_service_id`。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| backup_config | storage_service | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| storage_service_id | id |

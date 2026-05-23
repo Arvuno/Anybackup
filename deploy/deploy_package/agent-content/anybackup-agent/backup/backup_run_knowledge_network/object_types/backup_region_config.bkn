@@ -1,0 +1,36 @@
+---
+type: object_type
+id: backup_region_config
+name: 备份区域配置
+tags: []
+---
+
+## ObjectType: 备份区域配置
+
+用于描述保护对象公共配置下的区域级配置，包括区域名称、故障切换开关和失败统计信息。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | region | region |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| region_name | 区域名称 | string | 区域名称 | region_name |
+| config_id | 基础配置ID | string | 备份配置唯一标识 | config_id |
+| task_failed_count | 任务失败次数 | integer | 触发故障切换作业失败次数 | task_failed_count |
+| storage_available | 是否开启存储池故障切换 | integer | 存储池故障切换开关 | storage_available |
+| id | 区域ID | string | 唯一标识 | id |
+| sequence_number | 区域序号 | integer | 区域配置顺序号 | sequence_number |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: region_name
+Incremental Key:

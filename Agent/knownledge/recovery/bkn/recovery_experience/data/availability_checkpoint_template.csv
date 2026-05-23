@@ -1,0 +1,2 @@
+checkpointTemplateId,name,appType,checkpointType,targetScope,verificationMethod,successCriteria,faultPatternId,strategyTemplateId,enabled
+ckpt_mysql_basic_sql_verification,MySQL基础SQL检索验证模板,MySQL,sql_query,instance,连接 MySQL 实例并执行 select User from user，验证 mysql.user 表是否可正常检索。,SQL 执行成功并返回 result=true.,,,true

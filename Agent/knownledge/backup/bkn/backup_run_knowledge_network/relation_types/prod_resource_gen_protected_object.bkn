@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: prod_resource_gen_protected_object
+name: 生产资源生成保护对象
+tags: []
+---
+
+## RelationType: 生产资源生成保护对象
+
+描述生产资源在被纳入保护后生成保护对象的关系。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| production_resource | protected_object | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| productionResourceId | production_resource_id |

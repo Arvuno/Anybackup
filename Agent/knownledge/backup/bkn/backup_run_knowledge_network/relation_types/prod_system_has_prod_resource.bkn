@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: prod_system_has_prod_resource
+name: 生产系统拥有生产资源
+tags: []
+---
+
+## RelationType: 生产系统拥有生产资源
+
+描述生产系统与其下生产资源之间的拥有关系，来源于 `production_resource.productionSystemId`。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| production_system | production_resource | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| id | productionSystemId |

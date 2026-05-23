@@ -1,0 +1,52 @@
+---
+type: object_type
+id: backup_plan
+name: 备份计划
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 备份计划
+
+用于表达备份方案中的计划条目。该对象按计划类型建模，支持分钟级计划、小时级计划、天级计划、周级计划、月级计划、季度级计划、年级计划；每条记录只表达一个计划条目，并使用对应计划类型实际需要的参数。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | backup_plan | backup_plan |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 计划ID | string | 备份计划条目唯一标识。 | id |
+| backup_solution_id | 备份方案ID | string | 当前计划条目所属的备份方案。 | backup_solution_id |
+| name | 计划名称 | string | 备份计划条目名称。 | name |
+| app_object_type | 应用类型 | string | 当前计划条目适用的应用类型，例如 mysql、oracle、file。 | app_object_type |
+| plan_type | 计划类型 | string | 计划类型，例如 分钟级计划、小时级计划、天级计划、周级计划、月级计划、季度级计划、年级计划。 | plan_type |
+| period_value | 周期数值 | integer | 计划周期数值，例如每 N 分钟、每 N 小时、每 N 天、每 N 周、每 N 月。 | period_value |
+| launch_time | 发起时间 | time | 适用于分钟级、天级、周级、月级、季度级计划的发起时间。 | launch_time |
+| launch_minute | 发起分钟 | integer | 小时级计划的发起分钟。 | launch_minute |
+| launch_weekday | 发起星期 | string | 周级计划的发起星期，例如 周一至周日。 | launch_weekday |
+| launch_basis | 发起基准 | string | 月级计划的发起基准，例如 按日期、按周。 | launch_basis |
+| launch_date | 发起日期 | integer | 月级计划或季度级计划按日期触发时的日期值。 | launch_date |
+| launch_week_order | 发起周序 | string | 月级计划按周触发时的周序，例如 第1个、第2个、最后1个。 | launch_week_order |
+| launch_weekday_in_period | 发起周内日 | string | 月级计划按周触发时的星期值，例如 周一、周二。 | launch_weekday_in_period |
+| quarter_scope | 季度范围 | string | 季度级计划的季度范围，例如 Q1、Q2、Q3、Q4 或其组合。 | quarter_scope |
+| quarter_month | 季度月份 | string | 季度级计划的月份定位，例如 首月、次月、末月。 | quarter_month |
+| annual_launch_datetime | 年度发起日期时间 | datetime | 年级计划的年度发起日期时间。 | annual_launch_datetime |
+| backup_method | 备份方式 | string | 当前计划条目的备份方式，例如 完全备份、增量备份、差异备份、日志备份。 | backup_method |
+| requires_log_backup | 需要日志备份 | binary | 当前计划条目是否要求日志备份能力。 | requires_log_backup |
+| min_data_size_gb | 最小数据量GB | integer | 显式限定条目适用的最小数据量。 | min_data_size_gb |
+| max_data_size_gb | 最大数据量GB | integer | 显式限定条目适用的最大数据量。 | max_data_size_gb |
+| order_index | 展示顺序 | integer | 当前计划条目在同一方案中的展示或执行顺序。 | order_index |
+| description | 说明 | text | 备份计划条目说明。 | description |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

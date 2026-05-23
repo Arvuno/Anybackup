@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: datasource_belongs_timepoint
+name: 恢复数据源属于时间点副本
+tags: [MySQL, 恢复, 数据源, 时间点]
+---
+
+## RelationType: 恢复数据源属于时间点副本
+
+恢复数据源对象通过 timePointId 字段关联到时间点副本对象，表示该恢复数据源属于哪个时间点副本。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| recovery_datasource | timepoint_copy | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| timePointId | timePointId |

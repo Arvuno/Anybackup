@@ -1,0 +1,36 @@
+---
+type: object_type
+id: app_rule
+name: 应用级规则
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 应用级规则
+
+用于根据应用类型、数据类型与法规要求筛选可用备份方案的规则对象。该对象不再内嵌候选方案 ID，而是通过关系类型显式关联到 `backup_solution`。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | app_rule | app_rule |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 规则ID | string | 应用级规则唯一标识。 | id |
+| app_object_type | 应用类型 | string | 适用应用对象类型，例如 mysql、oracle、file。 | app_object_type |
+| data_type | 数据类型 | string | 规则适用的数据类型。 | data_type |
+| legal_requirement | 法规要求 | string | 规则关联的法规要求。 | legal_requirement |
+| rule_scope | 规则范围 | string | 规则作用范围，例如基础保护、增强保护、归档保护。 | rule_scope |
+| description | 说明 | text | 应用规则说明。 | description |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: id
+Incremental Key:

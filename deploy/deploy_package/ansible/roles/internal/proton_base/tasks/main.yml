@@ -1,0 +1,110 @@
+---
+- name: Ensure Proton offline directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ offline.bin_root }}"
+    - "{{ proton_offline.remote_dir }}"
+
+- name: Install proton-cli binary on remote host
+  ansible.builtin.copy:
+    src: "{{ proton_cli.binary_path }}"
+    dest: "{{ proton_cli.remote_bin_path }}"
+    mode: "0755"
+
+- name: Copy Proton offline package to remote host
+  ansible.builtin.copy:
+    src: "{{ proton_offline.package_path }}"
+    dest: "{{ proton_offline.remote_package_path }}"
+    mode: "0644"
+
+- name: Extract Proton offline package on remote host
+  ansible.builtin.unarchive:
+    src: "{{ proton_offline.remote_package_path }}"
+    dest: "{{ proton_offline.remote_dir }}"
+    remote_src: true
+    creates: "{{ proton_offline.extracted_dir }}/install.sh"
+
+- name: Check Proton base RPM installation state
+  ansible.builtin.command: "rpm -q {{ item }}"
+  register: proton_rpm_presence
+  changed_when: false
+  failed_when: false
+  loop:
+    - ecms
+    - haproxy
+    - proton-cr
+    - proton-cr-chartmuseum
+    - proton-cr-registry
+  loop_control:
+    label: "{{ item }}"
+
+- name: Install missing Proton base RPMs without upgrading Kubernetes packages
+  ansible.builtin.command:
+    argv:
+      - yum
+      - install
+      - -y
+      - --nogpgcheck
+      - "{{ proton_offline.extracted_dir }}/repos/Packages/ecms-1.1.8-120.1.el7.x86_64.rpm"
+      - "{{ proton_offline.extracted_dir }}/repos/Packages/haproxy-2.5.6.x86_64.rpm"
+      - "{{ proton_offline.extracted_dir }}/repos/Packages/proton-cr-1.2.5-87.el7.x86_64.rpm"
+      - "{{ proton_offline.extracted_dir }}/repos/Packages/proton-cr-chartmuseum-0.15.0.x86_64.rpm"
+      - "{{ proton_offline.extracted_dir }}/repos/Packages/proton-cr-registry-2.7.1.x86_64.rpm"
+  when: (proton_rpm_presence.results | rejectattr('rc', 'equalto', 0) | list | length) > 0
+
+- name: Enable and start Proton base services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - ecms
+    - proton-cr
+
+- name: Point containerd at certs.d registry config directory
+  ansible.builtin.replace:
+    path: /etc/containerd/config.toml
+    regexp: "config_path = (\"\"|'')"
+    replace: "config_path = '/etc/containerd/certs.d'"
+  register: proton_containerd_config_path
+
+- name: Ensure containerd registry override directory exists
+  ansible.builtin.file:
+    path: "/etc/containerd/certs.d/{{ proton_offline.registry_host }}:{{ proton_offline.registry_port }}"
+    state: directory
+    mode: "0755"
+
+- name: Write local HTTP registry override for containerd
+  ansible.builtin.copy:
+    dest: "/etc/containerd/certs.d/{{ proton_offline.registry_host }}:{{ proton_offline.registry_port }}/hosts.toml"
+    mode: "0644"
+    content: |
+      server = "http://{{ proton_offline.registry_host }}:{{ proton_offline.registry_port }}"
+
+      [host."http://{{ proton_offline.registry_host }}:{{ proton_offline.registry_port }}"]
+        capabilities = ["pull", "resolve"]
+        skip_verify = true
+  register: proton_containerd_registry_override
+
+- name: Restart containerd when registry override changes
+  ansible.builtin.systemd:
+    name: containerd
+    state: restarted
+  when: proton_containerd_registry_override.changed or proton_containerd_config_path.changed
+
+- name: Check Proton registry and chartmuseum listeners
+  ansible.builtin.shell: |
+    set -euo pipefail
+    ss -ltn | awk '
+      $4 ~ /:{{ proton_offline.registry_port }}$/ {registry=1}
+      $4 ~ /:{{ proton_offline.chartmuseum_port }}$/ {chartmuseum=1}
+      END {if (registry && chartmuseum) exit 0; exit 1}
+    '
+  register: proton_listener_check
+  changed_when: false
+  retries: "{{ proton_offline.listener_check_retries | default(60) }}"
+  delay: "{{ proton_offline.listener_check_delay | default(2) }}"
+  until: proton_listener_check.rc == 0

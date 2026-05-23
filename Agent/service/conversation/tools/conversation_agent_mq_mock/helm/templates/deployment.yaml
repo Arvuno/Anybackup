@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "conversation-agent-mq-mock.fullname" . }}
+  labels:
+    {{- include "conversation-agent-mq-mock.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "conversation-agent-mq-mock.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mq-mock
+  template:
+    metadata:
+      labels:
+        {{- include "conversation-agent-mq-mock.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: mq-mock
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: conversation-agent-mq-mock
+          image: {{ include "conversation-agent-mq-mock.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: RABBITMQ_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: {{ .Values.secrets.rabbitmqUrlKey }}
+            - name: CONVERSATION_EXCHANGE
+              value: {{ .Values.config.conversationExchange | quote }}
+            - name: CONVERSATION_ROUTING_KEY
+              value: {{ .Values.config.conversationRoutingKey | quote }}
+            - name: MOCK_INPUT_QUEUE
+              value: {{ .Values.config.mockInputQueue | quote }}
+            - name: CORE_STATUS_QUEUE
+              value: {{ .Values.config.coreStatusQueue | quote }}
+            - name: AGUI_EXCHANGE
+              value: {{ .Values.config.aguiExchange | quote }}
+            - name: AGUI_ROUTING_KEY
+              value: {{ .Values.config.aguiRoutingKey | quote }}
+            - name: AGUI_QUEUE
+              value: {{ .Values.config.aguiQueue | quote }}
+            - name: MOCK_DELAY_MS
+              value: {{ .Values.config.mockDelayMs | quote }}
+            - name: MOCK_PREFETCH_COUNT
+              value: {{ .Values.config.mockPrefetchCount | quote }}
+            - name: MOCK_WORKER_ID
+              value: {{ .Values.config.workerId | quote }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

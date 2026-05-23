@@ -1,0 +1,52 @@
+---
+type: action_type
+action_type: add
+id: query_recovery_jobs
+name: 查询恢复作业列表
+tags: [恢复作业, 查询, Foundation]
+enabled: true
+risk_level: low
+requires_approval: false
+---
+
+## ActionType: 查询恢复作业列表
+
+查询某一数据保护对象的恢复作业列表，可根据业务类型进行筛选。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| recovery_job |
+
+### Pre-conditions
+
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| protection_object | exist | true | 数据保护对象必须存在 |
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| recovery_job | 仅查询操作，不影响数据 |
+
+### Tool Configuration
+
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | foundation_toolbox | query_recovery_jobs |
+
+### Parameter Binding
+
+| Name | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| objectId | string | input | - | 数据保护对象ID（必填） |
+| businessType | integer | input | - | 业务类型（可选，10=数据恢复，11=挂载恢复，12=细粒度恢复） |
+
+### Execution Description
+
+1. 接收参数
+2. 验证参数 - 检查 objectId 是否存在、是否有效；检查 businessType 是否有效（如果提供）
+3. 调用 Foundation 工具查询恢复作业列表
+4. 返回结果 - 返回恢复作业列表，包含：jobId, objectId, clientId, speed, startTime, endTime, completedData, sendSize, businessType

@@ -1,0 +1,38 @@
+---
+type: object_type
+id: timepoint_copy
+name: 时间点副本
+tags: [MySQL, 备份, 时间点, 恢复]
+---
+
+## ObjectType: 时间点副本
+
+备份时间点副本对象，记录了数据保护对象在特定时间点的备份数据。时间点副本是恢复操作的数据源，支持全量备份、增量备份和日志备份。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| timePointId | 时间点ID | string | 时间点副本唯一标识符（去掉横杠的UUID） | timePointId |
+| timestamp | 时间戳 | integer | 时间戳（毫秒） | timestamp |
+| displayTime | 显示时间 | string | 显示时间（年-月-日 时:分:秒 时区） | displayTime |
+| backupType | 备份类型 | integer | 备份类型（1=全量备份，2=增量备份，3=日志备份） | backupType |
+| storagePoolName | 存储池名称 | string | 存储池名称 | storagePoolName |
+| isClean | 是否干净备份 | boolean | 是否干净备份 | isClean |
+| objectId | 对象ID | string | 关联的数据保护对象ID | objectId |
+| storagePoolId | 存储池ID | string | 关联的存储池ID | storagePoolId |
+| dataSetId | 数据集ID | string | 数据集ID | dataSetId |
+
+### Keys
+
+Primary Keys: timePointId
+Display Key: displayTime
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|

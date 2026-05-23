@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: backup_config_to_client
+name: 备份配置使用客户端
+tags: []
+---
+
+## RelationType: 备份配置使用客户端
+
+描述通用备份配置与客户端之间的归属关系，来源于 `backup_config.client_id`。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| backup_config | client | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| client_id | id |

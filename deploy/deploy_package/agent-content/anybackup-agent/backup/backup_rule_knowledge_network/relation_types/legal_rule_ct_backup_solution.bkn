@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: legal_rule_ct_backup_solution
+name: 法规约束方案
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: 法规约束方案
+
+通过 `legal_rule.id` 匹配 `backup_solution.source_legal_rule_id`，表示满足某条法规要求的备份方案集合。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| legal_rule | backup_solution | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| id | source_legal_rule_id |

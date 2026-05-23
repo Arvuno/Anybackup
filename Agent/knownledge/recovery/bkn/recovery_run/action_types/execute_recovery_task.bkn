@@ -1,0 +1,63 @@
+---
+type: action_type
+action_type: add
+id: execute_recovery_task
+name: 发起恢复任务
+tags: [恢复任务, 执行, Foundation]
+enabled: true
+risk_level: high
+requires_approval: true
+---
+
+## ActionType: 发起恢复任务
+
+发起MySQL数据库恢复任务，执行恢复操作。恢复任务执行完成后（无论成功与否），会生成恢复作业记录。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| recovery_task |
+
+### Pre-conditions
+
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| client | exist | true | 客户端必须存在 |
+| client | property:status | 1 | 客户端必须在线 |
+| timepoint_copy | exist | true | 时间点副本必须存在 |
+| storage_service | exist | true | 存储服务必须存在 |
+| storage_pool | exist | true | 存储池必须存在 |
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| recovery_task | 创建恢复任务记录 |
+| recovery_job | 恢复任务执行完成后生成恢复作业记录 |
+| client | 在目标客户端上执行恢复操作，可能影响客户端上的数据库 |
+
+### Tool Configuration
+
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | foundation_toolbox | execute_recovery_task |
+
+### Parameter Binding
+
+| Name | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| clientId | string | input | - | 恢复目标客户端ID（必填） |
+| clientIp | string | input | - | 恢复目标客户端IP（必填） |
+| timePointId | string | input | - | 时间点副本ID（必填） |
+| timestamp | integer | input | - | 选择的时间点的时间戳（毫秒，必填） |
+| storageServiceId | string | input | - | 时间点所属的存储服务ID（必填） |
+| storagePoolId | string | input | - | 时间点所属的存储池ID（必填） |
+
+### Execution Description
+
+1. 接收参数
+2. 验证参数 - 检查 clientId 是否存在、是否有效；检查 clientIp 是否有效；检查 timePointId 是否存在、是否有效；检查 timestamp 是否有效；检查 storageServiceId 是否存在、是否有效；检查 storagePoolId 是否存在、是否有效
+3. 检查前置条件 - 检查客户端是否在线；检查时间点副本是否存在；检查存储服务和存储池是否存在
+4. 调用 Foundation 工具执行恢复任务
+5. 返回结果 - 返回恢复任务ID；返回恢复任务执行状态

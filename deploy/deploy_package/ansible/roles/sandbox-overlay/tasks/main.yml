@@ -1,0 +1,5 @@
+---
+- name: Verify or apply sandbox image overlay
+  ansible.builtin.include_role:
+    name: internal/sandbox_overlay
+  when: deployment_profile == "full"

@@ -1,0 +1,10 @@
+---
+- name: Run KWeaver core-only verification
+  ansible.builtin.include_role:
+    name: internal/verify_core_only
+  when: deployment_profile == "kweaver-core-only"
+
+- name: Run full verification and smoke checks
+  ansible.builtin.include_role:
+    name: internal/verify
+  when: deployment_profile != "kweaver-core-only"

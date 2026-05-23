@@ -1,0 +1,2 @@
+capabilityId,name,vendor,appType,supportedGranularity,supportedTechnique,supportedMode,supportsOriginalRestore,supportsRemoteRestore,supportsPointInTimeRestore,supportsLogRestore,tableRecoveryMode,capabilitySummary,enabled
+mysql_recovery_capability_v1,MySQL恢复能力集,AISHU,MySQL,"instance,database,log_file,table_indirect","restore,mount","shortest_time,latest_state,specified_time",true,true,true,true,indirect_only,"支持实例级、库级、日志文件级恢复；表级仅支持间接恢复；支持数据恢复与挂载恢复(暂不支持，占坑用)；支持原机和异机；支持最短时间恢复、恢复到最新状态和恢复到指定时间。",true

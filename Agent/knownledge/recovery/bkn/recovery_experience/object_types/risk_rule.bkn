@@ -1,0 +1,39 @@
+---
+type: object_type
+id: risk_rule
+name: 风险规则
+tags: [Database, 恢复, 经验知识, 风险]
+---
+
+## ObjectType: 风险规则
+
+风险规则对象定义恢复方案所关联的风险控制知识，用于表达高风险触发条件、风险等级、审批要求和缓解建议。它回答的是“这个方案是否可以自动执行，还是必须人工确认”。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| riskRuleId | 风险规则ID | string | 风险规则唯一标识。 | riskRuleId |
+| name | 规则名称 | string | 风险规则名称。 | name |
+| appType | 应用类型 | string | 数据库应用类型，如 MySQL、Oracle、PostgreSQL、SQLServer。 | appType |
+| strategyTemplateId | 策略模板ID | string | 关联的恢复策略模板标识；为空时表示通用风险规则。 | strategyTemplateId |
+| triggerCondition | 触发条件 | text | 风险触发条件说明。 | triggerCondition |
+| riskLevel | 风险等级 | string | 风险等级，如 high、medium、low。 | riskLevel |
+| approvalRequired | 是否需要审批 | boolean | 命中该规则时是否必须人审。 | approvalRequired |
+| mitigationAdvice | 缓解建议 | text | 风险缓解建议。 | mitigationAdvice |
+| enabled | 是否启用 | boolean | 是否参与风险评估。 | enabled |
+
+### Keys
+
+Primary Keys: riskRuleId
+Display Key: name
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | risk_rule | risk_rule |

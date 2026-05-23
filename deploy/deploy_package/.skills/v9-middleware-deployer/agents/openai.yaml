@@ -1,0 +1,4 @@
+interface:
+  display_name: "V9 Middleware Deployer"
+  short_description: "Deploy and align the V9 middleware stack."
+  default_prompt: "Use this skill to deploy or align PostgreSQL, Redis, RabbitMQ, OpenSearch, and local-path for V9."

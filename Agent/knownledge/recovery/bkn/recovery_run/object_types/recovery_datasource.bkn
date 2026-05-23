@@ -1,0 +1,35 @@
+---
+type: object_type
+id: recovery_datasource
+name: 恢复数据源
+tags: [MySQL, 恢复, 数据源, 备份]
+---
+
+## ObjectType: 恢复数据源
+
+恢复数据源对象，记录了选定时间点副本下可用于恢复的具体数据文件或数据集。恢复数据源关联到时间点副本，提供了恢复操作所需的具体数据路径和元数据信息。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| recovery_datasourceId | 恢复数据源ID | string | 恢复数据源唯一标识符（去掉横杠的UUID） | recovery_datasourceId |
+| display | 展示名称 | string | 展示名称，如database_backup_001 | display |
+| fullPath | 全路径 | string | 全路径，如/backup/mysql/2024/01/database_backup.sql | fullPath |
+| metadata | 对象元数据 | string | 对象元数据（JSON字符串格式） | metadata |
+| objectSize | 对象大小 | integer | 对象大小（字节） | objectSize |
+| timePointId | 时间点ID | string | 关联的时间点副本对象ID | timePointId |
+
+### Keys
+
+Primary Keys: recovery_datasourceId
+Display Key: display
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|

@@ -1,0 +1,225 @@
+---
+- name: Ensure remote KWeaver offline directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ kweaver_offline.remote_root }}"
+    - "{{ kweaver_offline.remote_manifests_dir }}"
+
+- name: Copy KWeaver Core offline package to remote host
+  ansible.builtin.copy:
+    src: "{{ kweaver_offline.package_path }}"
+    dest: "{{ kweaver_offline.remote_package_path }}"
+    mode: "0644"
+
+- name: Copy versioned KWeaver manifests to remote host
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - src: "{{ kweaver_offline.core_manifest_path }}"
+      dest: "{{ kweaver_offline.remote_manifests_dir }}/kweaver-core.yaml"
+    - src: "{{ kweaver_offline.isf_manifest_path }}"
+      dest: "{{ kweaver_offline.remote_manifests_dir }}/isf.yaml"
+  loop_control:
+    label: "{{ item.dest | basename }}"
+
+- name: Initialize KWeaver offline state facts
+  ansible.builtin.set_fact:
+    kweaver_state_data: {}
+    kweaver_helm_releases: []
+
+- name: Read recorded KWeaver offline install state
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - get
+      - configmap
+      - "{{ kweaver_offline.state_configmap_name }}"
+      - -n
+      - "{{ kweaver.namespace }}"
+      - -o
+      - json
+  register: kweaver_state_configmap_raw
+  changed_when: false
+  failed_when: false
+
+- name: Parse recorded KWeaver offline install state
+  ansible.builtin.set_fact:
+    kweaver_state_data: "{{ (kweaver_state_configmap_raw.stdout | from_json).data | default({}) }}"
+  when:
+    - kweaver_state_configmap_raw.rc == 0
+    - (kweaver_state_configmap_raw.stdout | default('') | trim | length) > 0
+
+- name: Read current Helm releases from KWeaver namespace
+  ansible.builtin.command:
+    argv:
+      - helm
+      - list
+      - -n
+      - "{{ kweaver.namespace }}"
+      - -o
+      - json
+  register: kweaver_helm_releases_raw
+  changed_when: false
+  failed_when: false
+
+- name: Parse current Helm releases from KWeaver namespace
+  ansible.builtin.set_fact:
+    kweaver_helm_releases: "{{ kweaver_helm_releases_raw.stdout | from_json }}"
+  when:
+    - kweaver_helm_releases_raw.rc == 0
+    - (kweaver_helm_releases_raw.stdout | default('') | trim | length) > 0
+
+- name: Check whether current KWeaver deployments are ready
+  ansible.builtin.shell: |
+    set -euo pipefail
+    kubectl get deploy -n {{ kweaver.namespace }} -o jsonpath='{range .items[*]}{.metadata.name}{"|"}{.status.readyReplicas}{"|"}{.spec.replicas}{"\n"}{end}' \
+      | awk -F'|' '
+          BEGIN {healthy=1; count=0}
+          NF >= 3 {
+            count++
+            ready=$2 + 0
+            desired=$3 + 0
+            if (desired > 0 && ready < desired) healthy=0
+          }
+          END {
+            if (count == 0 || healthy == 0) exit 1
+          }
+        '
+  register: kweaver_deploy_health
+  changed_when: false
+  failed_when: false
+
+- name: Derive current KWeaver installation state
+  ansible.builtin.set_fact:
+    kweaver_detected_release: "{{ (kweaver_helm_releases | selectattr('name', 'equalto', 'bkn-backend') | list | first) | default({}) }}"
+    kweaver_recorded_version: "{{ kweaver_state_data.target_version | default('') }}"
+    kweaver_detected_version: "{{ (kweaver_detected_release.chart | default('')) | regex_replace('^bkn-backend-', '') }}"
+    kweaver_installed: "{{ (kweaver_state_data | length > 0) or (kweaver_helm_releases | length > 0) }}"
+
+- name: Finalize KWeaver install decision facts
+  ansible.builtin.set_fact:
+    kweaver_current_version: "{{ kweaver_recorded_version if (kweaver_recorded_version | length > 0) else kweaver_detected_version }}"
+    kweaver_all_helm_releases_deployed: "{{ (kweaver_helm_releases | length > 0) and ((kweaver_helm_releases | rejectattr('status', 'equalto', 'deployed') | list | length) == 0) }}"
+    kweaver_healthy: "{{ ((kweaver_helm_releases | length) > 0) and kweaver_all_helm_releases_deployed and (kweaver_deploy_health.rc == 0) }}"
+    kweaver_same_version: "{{ (kweaver_current_version | length > 0) and (kweaver_current_version == kweaver_offline.version) }}"
+    kweaver_unknown_installed_version: "{{ kweaver_installed and (kweaver_current_version | length == 0) }}"
+    kweaver_should_fail_version_mismatch: "{{ kweaver_installed and (kweaver_current_version | length > 0) and (kweaver_current_version != kweaver_offline.version) and not (kweaver_offline.allow_upgrade | bool) }}"
+    kweaver_should_skip_install: "{{ (offline.skip_kweaver_when_healthy | bool) and kweaver_installed and kweaver_same_version and kweaver_healthy and not (kweaver_offline.force_reinstall | bool) }}"
+    kweaver_should_run_install: "{{ (not kweaver_installed) or (kweaver_offline.force_reinstall | bool) or (kweaver_installed and kweaver_same_version and not kweaver_healthy) or (kweaver_installed and (kweaver_current_version | length > 0) and (kweaver_current_version != kweaver_offline.version) and (kweaver_offline.allow_upgrade | bool)) }}"
+
+- name: Print KWeaver offline install decision
+  ansible.builtin.debug:
+    msg:
+      - "Current KWeaver version: {{ kweaver_current_version | default('') or 'unknown' }}"
+      - "Target KWeaver version: {{ kweaver_offline.version }}"
+      - "Installed: {{ kweaver_installed }}"
+      - "Healthy: {{ kweaver_healthy }}"
+      - "Skip install: {{ kweaver_should_skip_install }}"
+      - "Run install: {{ kweaver_should_run_install }}"
+
+- name: Stop when an installed KWeaver version cannot be identified safely
+  ansible.builtin.fail:
+    msg: >-
+      KWeaver appears to be installed in namespace {{ kweaver.namespace }}, but the current version could not be determined safely.
+      Refusing to continue without an explicit version signal. Set kweaver_offline.force_reinstall=true only when you intend to repair this environment deliberately.
+  when: kweaver_unknown_installed_version
+
+- name: Stop when a different KWeaver version is already installed
+  ansible.builtin.fail:
+    msg: >-
+      KWeaver {{ kweaver_current_version }} is already installed in namespace {{ kweaver.namespace }},
+      but the offline package targets {{ kweaver_offline.version }}.
+      Automatic upgrade is disabled by default. Set kweaver_offline.allow_upgrade=true to continue intentionally.
+  when: kweaver_should_fail_version_mismatch
+
+- name: Ensure local ChartMuseum repo is configured for offline installs
+  ansible.builtin.command:
+    argv:
+      - helm
+      - repo
+      - add
+      - --force-update
+      - kweaver-local
+      - "http://{{ proton_offline.registry_host }}:{{ proton_offline.chartmuseum_port }}"
+  when: kweaver_should_run_install
+
+- name: Import KWeaver Core offline package into local Proton registry and ChartMuseum
+  ansible.builtin.command:
+    argv:
+      - "{{ proton_cli.remote_bin_path }}"
+      - app
+      - import
+      - -i
+      - "{{ kweaver_offline.remote_package_path }}"
+      - --registry
+      - "{{ proton_offline.registry_host }}:{{ proton_offline.registry_port }}"
+      - --chartmuseum-url
+      - "http://{{ proton_offline.registry_host }}:{{ proton_offline.chartmuseum_port }}"
+      - --force
+  when: kweaver_should_run_install
+
+- name: Install or repair KWeaver Core from offline package
+  ansible.builtin.command:
+    argv:
+      - "{{ proton_cli.remote_bin_path }}"
+      - app
+      - install
+      - -f
+      - "{{ kweaver_offline.remote_manifests_dir }}/kweaver-core.yaml"
+      - -n
+      - "{{ kweaver.namespace }}"
+      - --config
+      - "{{ kweaver.config_path }}"
+      - --image-registry
+      - "{{ proton_offline.registry_host }}:{{ proton_offline.registry_port }}"
+      - --helm-repo-name
+      - kweaver-local
+      - --helm-repo-url
+      - "http://{{ proton_offline.registry_host }}:{{ proton_offline.chartmuseum_port }}"
+      - --access-host
+      - "{{ ansible_host | default('127.0.0.1') }}"
+      - --access-port
+      - "{{ ingress.managed_nodeport.https_node_port | string }}"
+      - --access-scheme
+      - https
+      - --timeout
+      - 60m
+  when: kweaver_should_run_install
+
+- name: Wait for KWeaver application namespace running pods
+  ansible.builtin.shell: |
+    set -euo pipefail
+    pods="$(kubectl get pods -n {{ kweaver.namespace }} --field-selector=status.phase=Running -o jsonpath='{range .items[*]}pod/{.metadata.name} {end}')"
+    if [ -n "$pods" ]; then
+      kubectl wait -n {{ kweaver.namespace }} --for=condition=Ready $pods --timeout={{ verify.timeout }}
+    fi
+  changed_when: false
+  when: kweaver_should_run_install
+
+- name: Render KWeaver offline install state ConfigMap manifest
+  ansible.builtin.copy:
+    dest: "{{ generated_root }}/kweaver-offline-state.yaml"
+    mode: "0600"
+    content: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: {{ kweaver_offline.state_configmap_name }}
+        namespace: {{ kweaver.namespace }}
+      data:
+        install_mode: offline
+        target_version: {{ kweaver_offline.version | quote }}
+        manifest_sha256: {{ (lookup('file', kweaver_offline.core_manifest_path) | hash('sha256')) | quote }}
+        proton_package_name: {{ (proton_offline.package_path | basename) | quote }}
+        kweaver_package_name: {{ (kweaver_offline.package_path | basename) | quote }}
+        last_success_time: {{ ansible_date_time.iso8601 | quote }}
+  when: kweaver_should_run_install or (kweaver_should_skip_install and (kweaver_state_data | length == 0))
+
+- name: Persist KWeaver offline install state
+  ansible.builtin.command: "kubectl apply -f {{ generated_root }}/kweaver-offline-state.yaml"
+  when: kweaver_should_run_install or (kweaver_should_skip_install and (kweaver_state_data | length == 0))

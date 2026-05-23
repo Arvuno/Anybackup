@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: data_rule_ct_backup_solution
+name: 数据规则约束方案
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: 数据规则约束方案
+
+通过 `data_rule.data_type` 匹配 `backup_solution.source_data_type`，将数据侧规则映射到对应的备份方案。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| data_rule | backup_solution | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| data_type | source_data_type |

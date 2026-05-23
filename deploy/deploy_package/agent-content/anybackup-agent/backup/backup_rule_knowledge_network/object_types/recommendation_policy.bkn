@@ -1,0 +1,46 @@
+---
+type: object_type
+id: recommendation_policy
+name: 候选推荐策略
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 候选推荐策略
+
+描述候选方案推荐时使用的默认值、综合评估权重以及最多输出数量。它不承载查询输入本身，而是为 action 提供稳定的评估与回退规则。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | recommendation_policy | recommendation_policy |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 推荐策略ID | string | 候选推荐策略唯一标识。 | id |
+| name | 推荐策略名称 | string | 推荐策略名称。 | name |
+| industry_type | 行业类型 | string | 适用行业类型，如金融、政府、能源、未定义。 | industry_type |
+| default_data_type | 默认数据类型 | string | 当外部未传数据类型时使用的默认值。 | default_data_type |
+| default_rpo_minutes | 默认RPO分钟 | integer | 当外部未传 RPO 时使用的默认值。 | default_rpo_minutes |
+| default_rto_minutes | 默认RTO分钟 | integer | 当外部未传 RTO 时使用的默认值。 | default_rto_minutes |
+| default_backup_window | 默认备份窗口 | string | 当外部未传备份窗口时使用的默认窗口语义。 | default_backup_window |
+| max_candidate_count | 最大候选数 | integer | 最多输出的候选备份方案数量。 | max_candidate_count |
+| matched_legal_rule_ids | 命中法规ID列表 | text | 该推荐策略可命中的法规规则 ID 列表，逗号分隔。 | matched_legal_rule_ids |
+| compliance_weight | 合规权重 | integer | 行业法规和保留计划匹配的评分权重。 | compliance_weight |
+| data_type_weight | 数据类型权重 | integer | 数据类型与数据分级匹配的评分权重。 | data_type_weight |
+| rpo_weight | RPO权重 | integer | RPO 目标满足度评分权重。 | rpo_weight |
+| rto_weight | RTO权重 | integer | RTO 目标满足度评分权重。 | rto_weight |
+| window_weight | 窗口权重 | integer | 备份窗口匹配度评分权重。 | window_weight |
+| priority_weight | 优先级权重 | integer | 备份方案优先级评分权重。 | priority_weight |
+| description | 说明 | text | 推荐策略说明。 | description |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

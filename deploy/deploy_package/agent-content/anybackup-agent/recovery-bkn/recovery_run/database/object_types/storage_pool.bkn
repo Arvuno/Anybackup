@@ -1,0 +1,33 @@
+---
+type: object_type
+id: storage_pool
+name: 存储池
+tags: [MySQL, 备份, 存储池, 恢复]
+---
+
+## ObjectType: 存储池
+
+存储池对象，表示存储服务下的存储池。存储池是备份数据的实际存储位置，一个存储服务可以包含多个存储池。
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| storagePoolId | 存储池ID | string | 存储池唯一标识符（去掉横杠的UUID） | storagePoolId |
+| storagePoolName | 存储池名称 | string | 存储池名称 | storagePoolName |
+| storageServiceId | 存储服务ID | string | 关联的存储服务ID | storageServiceId |
+
+### Keys
+
+Primary Keys: storagePoolId
+Display Key: storagePoolName
+Incremental Key:
+
+### Logic Properties
+
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | StorageResMgmServiceDB.pool_v8 | StorageResMgmServiceDB.pool_v8 |

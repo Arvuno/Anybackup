@@ -1,0 +1,59 @@
+---
+- name: Deploy V9 infrastructure
+  ansible.builtin.include_role:
+    name: internal/v9_infra
+
+- name: Install KWeaver Core from upstream source
+  ansible.builtin.include_role:
+    name: internal/kweaver_online_install
+
+- name: Install or verify KWeaver Etrino optional services
+  ansible.builtin.include_role:
+    name: internal/kweaver_etrino_optional
+  when:
+    - deployment_profile == "full"
+    - kweaver_etrino.enabled | default(true) | bool
+
+- name: Install internal-only KWeaver compatibility services required by 0.6.0
+  ansible.builtin.include_role:
+    name: internal/kweaver_core_compat
+
+- name: Apply KWeaver image overrides
+  ansible.builtin.include_role:
+    name: internal/kweaver_image_overrides
+  when:
+    - deployment_profile == "full"
+    - kweaver_image_overrides.enabled | default(true) | bool
+
+- name: Configure KWeaver CLI for the freshly installed local platform
+  ansible.builtin.include_role:
+    name: internal/kweaver_cli_config
+  when: kweaver_cli.enabled | default(true) | bool
+
+- name: Install or verify Foundation
+  ansible.builtin.include_role:
+    name: internal/foundation_install
+  when:
+    - deployment_profile == "full"
+    - foundation.enabled | default(true) | bool
+
+- name: Install or verify FoundationClient
+  ansible.builtin.include_role:
+    name: internal/foundation_client
+  when:
+    - deployment_profile == "full"
+    - foundation.enabled | default(true) | bool
+    - foundation_client.enabled | default(true) | bool
+    - foundation.mode | default('integrated') != "external"
+
+- name: Overlay foundation-cli into sandbox image
+  ansible.builtin.include_role:
+    name: internal/sandbox_overlay
+  when:
+    - deployment_profile == "full"
+    - sandbox_overlay_enabled | default(true) | bool
+
+- name: Prepare internal runtime networking
+  ansible.builtin.include_role:
+    name: internal/network_runtime
+  when: deployment_profile == "full"

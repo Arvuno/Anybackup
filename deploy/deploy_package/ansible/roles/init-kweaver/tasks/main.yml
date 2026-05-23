@@ -1,0 +1,7 @@
+---
+- name: Explain init-kweaver scope
+  ansible.builtin.debug:
+    msg:
+      - "init-kweaver role is kept only for release-layout compatibility."
+      - "The default installer no longer calls this role."
+      - "Formal KWeaver installation is handled by the online KWeaver Core deployment flow."

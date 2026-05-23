@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: app_config_rule_ct_backup_solution
+name: 应用配置规则约束方案
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: 应用配置规则约束方案
+
+通过 `app_config_rule.app_object_type` 与 `backup_solution.app_object_type` 建立应用配置规则项到候选备份方案的显式关系，用于先按应用类型收敛可匹配的应用配置规则集合，再由推荐 action 结合 `condition`、`config_category`、数据量、RPO 和数据分级等上下文完成二次筛选与去重。若规则项的 `app_object_type` 取值为 `all` 或逗号分隔的多应用类型列表，需由 action 继续解释其覆盖范围。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| app_config_rule | backup_solution | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| app_object_type | app_object_type |

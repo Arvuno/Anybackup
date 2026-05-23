@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: app_rule_ct_backup_solution
+name: 应用规则约束方案
+tags: [备份方案知识网络V2]
+---
+
+## RelationType: 应用规则约束方案
+
+通过 `app_rule.id` 匹配 `backup_solution.source_app_rule_id`，表示某条应用级规则可命中的备份方案集合。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| app_rule | backup_solution | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| id | source_app_rule_id |

@@ -1,0 +1,57 @@
+replicaCount: 1
+
+image:
+  registry: docker.aityp.com
+  repository: image/docker.io/anybackup/conversation-agent-mq-mock
+  tag: 0.1.1
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+config:
+  conversationExchange: conversation.agent.events
+  conversationRoutingKey: conversation.message.sent.v1
+  mockInputQueue: core-agent-mock.message.events
+  coreStatusQueue: conversation.core_agent.status.v1
+  aguiExchange: decision_agent.ag_ui.events
+  aguiRoutingKey: decision_agent.session.ag_ui_event.v1
+  aguiQueue: conversation.decision_agent.ag_ui
+  mockDelayMs: 800
+  mockPrefetchCount: 10
+  workerId: conversation-agent-mq-mock
+
+secrets:
+  name: conversation-service-secrets
+  rabbitmqUrlKey: rabbitmq-url
+
+extraEnv: []
+extraEnvFrom: []
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 96Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  capabilities:
+    drop:
+      - ALL
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+revisionHistoryLimit: 3

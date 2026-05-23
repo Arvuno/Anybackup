@@ -1,0 +1,38 @@
+traefik:
+  image:
+    registry: docker.m.daocloud.io
+    repository: library/traefik
+    pullPolicy: IfNotPresent
+  service:
+    enabled: true
+    type: ClusterIP
+  hostNetwork: false
+  ingressClass:
+    enabled: true
+    isDefaultClass: true
+    name: traefik
+  providers:
+    kubernetesCRD:
+      enabled: true
+      allowCrossNamespace: true
+      ingressClass: traefik
+      namespaces: []
+    kubernetesIngress:
+      enabled: false
+  ports:
+    web:
+      port: 8000
+      hostPort: 80
+      expose:
+        default: true
+      exposedPort: 80
+      protocol: TCP
+    websecure:
+      expose:
+        default: false
+
+auth:
+  enabled: true
+  tokenToXUser:
+    enabled: true
+    userinfoUrl: "http://auth-service-auth-service.{{ deployment_namespace }}.svc.cluster.local/api/auth_service/v1/realms/master/protocol/openid-connect/userinfo"

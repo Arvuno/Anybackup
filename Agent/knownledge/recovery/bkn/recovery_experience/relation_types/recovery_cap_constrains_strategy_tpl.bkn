@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: recovery_cap_constrains_strategy_tpl
+name: 恢复能力约束策略模板
+tags: [Database, 恢复, 经验知识, 策略]
+---
+
+## RelationType: 恢复能力约束策略模板
+
+恢复能力通过 `appType` 关联恢复策略模板，用于表达某类数据库的能力边界约束了哪些策略模板可被采用。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| recovery_capability | recovery_strategy_template | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| appType | appType |

@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: protected_object_to_prod_system
+name: 保护对象属于生产系统
+tags: []
+---
+
+## RelationType: 保护对象属于生产系统
+
+描述保护对象与所属生产系统之间的归属关系，来源于 `protect_object.production_system_id`。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| protected_object | production_system | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| production_system_id | id |

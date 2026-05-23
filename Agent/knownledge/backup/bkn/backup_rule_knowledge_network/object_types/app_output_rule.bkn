@@ -1,0 +1,46 @@
+---
+type: object_type
+id: app_output_rule
+name: 应用输出规则
+tags: [备份方案知识网络V2]
+---
+
+## ObjectType: 应用输出规则
+
+用于定义不同应用类型的推荐结果展示层级与节点命名规则，避免在 action 中为 mysql、oracle、file 等应用硬编码输出格式。每条记录描述一种应用输出方案，推荐阶段先匹配输出规则，再按规则组织最终返回结构。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 9e76b068-b2dd-4211-8325-30243e75edeb | app_output_rule |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 输出规则ID | string | 输出规则唯一标识。 | id |
+| app_object_type | 应用类型 | string | 规则适用的应用类型，例如 mysql、oracle、file、all。 | app_object_type |
+| profile_name | 输出方案名称 | string | 输出方案名称。 | profile_name |
+| solution_section_name | 方案层名称 | string | 输出中“备份方案”层的展示名称。 | solution_section_name |
+| strategy_section_name | 策略层名称 | string | 输出中“备份策略”层的展示名称。 | strategy_section_name |
+| window_section_name | 窗口层名称 | string | 输出中“备份窗口”层的展示名称。 | window_section_name |
+| plan_section_name | 计划层名称 | string | 输出中“备份计划”层的展示名称。 | plan_section_name |
+| retention_section_name | 保留层名称 | string | 输出中“副本保留”层的展示名称。 | retention_section_name |
+| basic_config_section_name | 基础配置层名称 | string | 输出中“基础配置”层的展示名称。 | basic_config_section_name |
+| region_config_section_name | 区域配置层名称 | string | 输出中“备份区域配置”层的展示名称。 | region_config_section_name |
+| client_section_name | 客户端层名称 | string | 输出中“备份客户端”层的展示名称。 | client_section_name |
+| storage_pool_section_name | 存储池层名称 | string | 输出中“备份存储池”层的展示名称。 | storage_pool_section_name |
+| app_config_section_name | 应用配置层名称 | string | 输出中应用配置层的展示名称，统一使用“应用配置”。 | app_config_section_name |
+| hide_id_fields | 隐藏ID字段 | binary | 是否在用户可见输出中隐藏所有对象ID字段。 | hide_id_fields |
+| empty_section_policy | 空层处理策略 | string | 当某层无内容时的处理方式，例如 omit、empty_array。 | empty_section_policy |
+| description | 说明 | text | 输出规则说明。 | description |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: profile_name
+Incremental Key:

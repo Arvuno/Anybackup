@@ -1,0 +1,45 @@
+---
+type: action_type
+action_type: add
+id: query_storage_services
+name: 查询存储服务列表
+tags: [存储服务, 查询, Foundation]
+enabled: true
+risk_level: low
+requires_approval: false
+---
+
+## ActionType: 查询存储服务列表
+
+查询所有存储服务，支持通过 onlyStorage 参数过滤返回结果。onlyStorage 为 true 时仅返回存储服务，为 false 时返回管理控制台和存储服务。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| storage_service |
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| storage_service | 仅查询操作，不影响数据 |
+
+### Tool Configuration
+
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | foundation_toolbox | query_storage_services |
+
+### Parameter Binding
+
+| Name | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| onlyStorage | boolean | input | - | 是否仅返回存储服务（true=仅存储服务，false=管理控制台和存储服务，默认true） |
+
+### Execution Description
+
+1. 接收参数
+2. 验证参数 - 检查 onlyStorage 参数是否有效（如果提供）
+3. 调用 Foundation 工具
+4. 返回结果 - 返回存储服务列表，包含：storageServiceId, storageServiceName

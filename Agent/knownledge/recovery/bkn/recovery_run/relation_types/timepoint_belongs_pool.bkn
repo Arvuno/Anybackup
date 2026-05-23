@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: timepoint_belongs_pool
+name: 时间点副本属于存储池
+tags: [MySQL, 恢复, 时间点, 存储池]
+---
+
+## RelationType: 时间点副本属于存储池
+
+时间点副本对象通过 storagePoolId 字段关联到存储池对象，表示该时间点副本存储在哪个存储池中。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| timepoint_copy | storage_pool | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| storagePoolId | storagePoolId |

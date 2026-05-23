@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Design Doc Orchestrator"
+  short_description: "Plan and route multi-file design doc updates."
+  default_prompt: "Use $design-doc-orchestrator to plan and update the impacted files under docs/00_设计文档 for this design change."

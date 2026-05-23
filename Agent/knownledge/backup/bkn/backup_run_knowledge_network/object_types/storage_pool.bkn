@@ -1,0 +1,38 @@
+---
+type: object_type
+id: storage_pool
+name: 存储池
+tags: []
+---
+
+## ObjectType: 存储池
+
+用于描述备份使用的存储池主数据，包括容量、状态以及所属存储服务。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 404666b0-412d-41a2-849d-0cc763cd1eb0 | pool_v8 |
+
+### Data Properties
+
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | 存储池ID | string | 存储池唯一标识 | id |
+| replication_num | 副本数量 | integer | 存储池副本数量 | replication_num |
+| used_size | 已使用空间 | integer | 存储池已使用空间 | used_size |
+| storage_svc_id | 存储服务ID | string | 所属存储服务唯一标识 | storage_svc_id |
+| type | 存储池类型 | integer | 存储池类型 | type |
+| name | 存储池名称 | string | 存储池名称 | name |
+| status | 存储池状态 | integer | 存储池运行状态 | status |
+| total_size | 总空间 | integer | 存储池总空间 | total_size |
+
+### Logic Properties
+
+
+### Keys
+
+Primary Key: id
+Display Key: name
+Incremental Key:

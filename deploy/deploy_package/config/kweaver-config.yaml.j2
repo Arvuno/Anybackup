@@ -1,0 +1,72 @@
+namespace: {{ kweaver.namespace }}
+replicaCount: {{ kweaver.replica_count }}
+mode: {{ kweaver.mode }}
+env:
+  language: {{ kweaver.env.language }}
+  timezone: {{ kweaver.env.timezone }}
+image:
+  registry: {{ kweaver.image_registry }}
+accessAddress:
+  host: {{ ((kweaver.access_address.host | default('', true)) or (effective_public_host | default(ansible_host | default('')))) | quote }}
+  port: {{ (kweaver.access_address.port | default(0, true)) or (effective_public_port | default(80)) }}
+  scheme: {{ ((kweaver.access_address.scheme | default('', true)) or (effective_public_scheme | default('http'))) | quote }}
+  path: {{ kweaver.access_address.path }}
+flowAutomation:
+  s3:
+    default: {{ kweaver.flow_automation.s3_default | quote }}
+    connections:
+      - name: {{ kweaver.flow_automation.s3_default | quote }}
+        endpoint: ""
+        region: us-east-1
+        accessKeyID: ""
+        secretAccessKey: ""
+        bucketName: ""
+        skipVerify: true
+        disableHTTPS: false
+dipStudio:
+  openClaw:
+    configHostPath: ''
+    workspaceHostPath: ''
+depServices:
+  mq:
+    auth:
+      mechanism: {{ kweaver.dep_services.mq.auth.mechanism | quote }}
+      username: {{ kweaver.dep_services.mq.auth.username | quote }}
+      password: {{ kweaver.dep_services.mq.auth.password | quote }}
+    mqHost: {{ kweaver.dep_services.mq.host | quote }}
+    mqLookupdHost: {{ kweaver.dep_services.mq.lookupd_host | quote }}
+    mqLookupdPort: {{ kweaver.dep_services.mq.lookupd_port }}
+    mqPort: {{ kweaver.dep_services.mq.port }}
+    mqType: {{ kweaver.dep_services.mq.type }}
+  opensearch:
+    distribution: {{ kweaver.dep_services.opensearch.distribution }}
+    host: {{ kweaver.dep_services.opensearch.host | quote }}
+    user: {{ kweaver.dep_services.opensearch.user | quote }}
+    password: {{ kweaver.dep_services.opensearch.password | quote }}
+    port: {{ kweaver.dep_services.opensearch.port }}
+    protocol: {{ kweaver.dep_services.opensearch.protocol }}
+    version: {{ kweaver.dep_services.opensearch.version | quote }}
+  rds:
+    admin_key: {{ kweaver.dep_services.rds.admin_key | quote }}
+    host: {{ kweaver.dep_services.rds.host | quote }}
+    hostRead: {{ kweaver.dep_services.rds.host_read | quote }}
+    port: {{ kweaver.dep_services.rds.port }}
+    portRead: {{ kweaver.dep_services.rds.port_read }}
+    source_type: {{ kweaver.dep_services.rds.source_type }}
+    type: {{ kweaver.dep_services.rds.type }}
+    user: {{ kweaver.dep_services.rds.user | quote }}
+    password: {{ kweaver.dep_services.rds.password | quote }}
+    database: {{ kweaver.dep_services.rds.database | quote }}
+  redis:
+    connectInfo:
+      masterGroupName: {{ kweaver.dep_services.redis.connect_info.master_group_name }}
+      password: {{ kweaver.dep_services.redis.connect_info.password | quote }}
+      sentinelHost: {{ kweaver.dep_services.redis.connect_info.sentinel_host | quote }}
+      sentinelPassword: {{ kweaver.dep_services.redis.connect_info.sentinel_password | quote }}
+      sentinelPort: {{ kweaver.dep_services.redis.connect_info.sentinel_port }}
+      sentinelUsername: {{ kweaver.dep_services.redis.connect_info.sentinel_username | quote }}
+      username: {{ kweaver.dep_services.redis.connect_info.username | quote }}
+    connectType: {{ kweaver.dep_services.redis.connect_type }}
+    sourceType: {{ kweaver.dep_services.redis.source_type }}
+class-443:
+  ingressClass: {{ ((kweaver.ingress_class | default('', true)) or (effective_ingress_class | default(''))) | quote }}

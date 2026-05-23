@@ -1,0 +1,61 @@
+---
+type: action_type
+action_type: add
+id: execute_availability_verification
+name: 执行可用性验证
+tags: [可用性验证, 执行, Foundation]
+enabled: true
+risk_level: medium
+requires_approval: true
+---
+
+## ActionType: 执行可用性验证
+
+执行对某数据库对象进行可用性验证，验证其是否能对外提供业务。通过连接数据库并执行验证操作，判断恢复后的数据库是否可以正常工作。
+
+### Bound Object
+
+| Bound Object |
+|--------------|
+| availability_verification |
+
+### Pre-conditions
+
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| client | exist | true | 客户端必须存在 |
+| client | property:status | 1 | 客户端必须在线 |
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| availability_verification | 执行可用性验证契约，不单独创建结果对象 |
+| client | 在目标客户端上执行验证操作，可能影响客户端上的数据库 |
+
+### Tool Configuration
+
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | foundation_toolbox | execute_availability_verification |
+
+### Parameter Binding
+
+| Name | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| dbUser | string | input | - | 连接要验证的数据库的所需用户名（必填） |
+| dbPwd | string | input | - | 连接要验证的数据库的所需密码（必填） |
+| dbHost | string | input | - | 连接要验证的数据库安装的主机的IP或主机名（必填） |
+| dbPort | integer | input | - | 连接要验证的数据库实例或库对外提供服务的端口（必填） |
+| confPath | string | input | - | 数据库的配置文件路径（可选） |
+| installPath | string | input | - | 数据库的安装路径（可选） |
+| dbType | string | input | - | 数据库类型（必填，mysql/oracle/sqlserver） |
+
+### Execution Description
+
+1. 接收参数
+2. 验证参数 - 检查必填参数是否存在：dbUser, dbPwd, dbHost, dbPort, dbType；检查参数格式是否正确
+3. 检查前置条件 - 检查客户端是否在线
+4. 根据dbType选择验证工具 - mysql：使用MySQL验证工具；oracle：使用Oracle验证工具；sqlserver：使用SQL Server验证工具
+5. 执行可用性验证 - 连接数据库；执行验证SQL或操作；获取验证结果
+6. 返回结果 - 返回验证状态（成功/失败）；返回验证详情；返回错误信息（如果失败）

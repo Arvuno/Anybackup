@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: fault_pattern_verified_by_checkpoint_tpl
+name: 故障模式由验证模板补充校验
+tags: [Database, 恢复, 经验知识, 验证]
+---
+
+## RelationType: 故障模式由验证模板补充校验
+
+故障模式通过 `faultPatternId` 关联验证模板，用于表达某些故障模式在通用方案验证之外，还需要补充执行特定专项验证。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| fault_pattern | availability_checkpoint_template | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| patternId | faultPatternId |

@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: protected_object_has_backup_config
+name: 保护对象对应备份配置
+tags: []
+---
+
+## RelationType: 保护对象对应备份配置
+
+描述保护对象与其对应备份配置之间的关系，来源于 `protect_object.backup_config_id`。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| protected_object | backup_config | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|------------------|
+| backup_config_id | id |

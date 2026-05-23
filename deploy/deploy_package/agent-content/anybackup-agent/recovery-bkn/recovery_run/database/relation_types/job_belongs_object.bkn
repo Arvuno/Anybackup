@@ -1,0 +1,22 @@
+---
+type: relation_type
+id: job_belongs_object
+name: 恢复作业属于数据保护对象
+tags: [MySQL, 恢复, 作业, 对象]
+---
+
+## RelationType: 恢复作业属于数据保护对象
+
+恢复作业对象通过 objectId 字段关联到数据保护对象，表示该恢复作业是针对哪个数据保护对象执行的恢复操作。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| recovery_job | protection_object | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| objectId | objectId |

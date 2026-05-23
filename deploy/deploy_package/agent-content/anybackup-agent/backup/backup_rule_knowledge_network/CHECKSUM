@@ -1,0 +1,29 @@
+# BKN Directory Checksum
+# generated: 2026-04-26T01:33:33Z
+SKILL.md  sha256:bd1049b8964a6a39
+concept_group:backup_solution_recommendation  sha256:c7adab498212ec1f
+object_type:app_backup_capability  sha256:44f321f417651cf4
+object_type:app_config_rule  sha256:be505e451167ae2b
+object_type:app_output_rule  sha256:4e6ef18f72eda0a9
+object_type:app_rule  sha256:c1bfdda378767237
+object_type:backup_plan  sha256:7296e0785476d322
+object_type:backup_solution  sha256:698b4d8e36333769
+object_type:backup_window  sha256:e0195d598d3222b2
+object_type:basic_config_rule  sha256:8d40329de0577610
+object_type:data_rule  sha256:01f94cdcbe16849c
+object_type:legal_rule  sha256:0eaeca5f5f717455
+object_type:recommendation_policy  sha256:9e6c3246b6d757dd
+object_type:retention_plan  sha256:7c8ba942c5a68251
+object_type:rpo_rule  sha256:3001441f18376be9
+relation_type:app_capability_ct_backup_plan  sha256:948f8e28877260f8
+relation_type:app_config_rule_ct_backup_solution  sha256:d72a4c4c8a1d2b41
+relation_type:app_output_rule_fmt_backup_solution  sha256:f2758f97db286848
+relation_type:app_rule_ct_backup_solution  sha256:fcda8b21346bcbf5
+relation_type:backup_solution_use_backup_plan  sha256:bc1a740f50afa297
+relation_type:backup_solution_use_backup_window  sha256:571dc4fb39a15d4c
+relation_type:backup_solution_use_retention_plan  sha256:0aec67cb1124c4b7
+relation_type:basic_config_rule_ct_backup_solution  sha256:1bb719541d2f9ff7
+relation_type:data_rule_ct_backup_solution  sha256:7f2555ffd32f0775
+relation_type:legal_rule_ct_backup_solution  sha256:aa9ed4957d218d7d
+relation_type:recommendation_policy_ct_backup_solution  sha256:d86e3a60f8428cfd
+relation_type:rpo_rule_ct_backup_solution  sha256:1879d6fb2e956b99

@@ -1,0 +1,10 @@
+namespace: {{ deployment_namespace }}
+imageRegistry: {{ v9_services_image_registry | quote }}
+imageTag: {{ v9_services_image_tag | quote }}
+imagePullPolicy: IfNotPresent
+commonEnv:
+{{ v9_services_common_env | to_nice_yaml(indent=2) | indent(2, true) }}
+resources:
+{{ v9_services_resources | to_nice_yaml(indent=2) | indent(2, true) }}
+services:
+{{ v9_services | to_nice_yaml(indent=2) | indent(2, true) }}

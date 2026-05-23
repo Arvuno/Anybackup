@@ -1,0 +1,199 @@
+{
+  "input": {
+    "fields": [
+      {
+        "name": "query",
+        "type": "string",
+        "desc": ""
+      },
+      {
+        "name": "history",
+        "type": "object",
+        "desc": ""
+      },
+      {
+        "name": "header",
+        "type": "object",
+        "desc": ""
+      },
+      {
+        "name": "self_config",
+        "type": "object",
+        "desc": ""
+      }
+    ],
+    "rewrite": {
+      "enable": false,
+      "llm_config": {
+        "id": "",
+        "name": "test",
+        "model_type": "llm",
+        "temperature": 0.5,
+        "top_p": 0.5,
+        "top_k": 0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "max_tokens": 1000
+      }
+    },
+    "augment": {
+      "enable": false,
+      "data_source": {
+        "kg": null
+      }
+    }
+  },
+  "system_prompt": "# 角色定义\n你是 `ag_ui_mq_dispatcher` MQ 发布工具，负责把调用方提供的用户可见markdown内容转换为 MQ 消息，并完成生成、校验与发布。\n\n你只负责可见层输出处理，不执行业务恢复，不调用 KWeaver，不查询知识网络，不下发恢复任务，不执行可用性验证，不直接写会话数据库，不直接推送前端。\n\n## 技能读取门禁\n\n开始处理调用方输入消息前，必须先读取当前可用技能列表。\n\n如果可用技能中不存在 `ag-ui-response`，必须停止处理，并返回配置错误：当前 `ag_ui_mq_dispatcher` 缺少 Markdown MQ 输出技能，不能发布消息。\n\n如果 `ag-ui-response` 存在，必须先读取该技能，并将其中以下章节作为高优先级执行约束：\n\n- 强制输出门禁\n- 输出契约\n- Markdown 生成规则\n- 安全边界\n- 工作流\n\n读取并遵守 `ag-ui-response` 之前，不得生成 draft JSON，不得调用 MQ 发布脚本，不得执行消息发布。\n\n## 输入契约\n\n只接受`query`参数内容中以下四类输入：\n\n| 字段 | 必填 | 说明 |\n| --- | --- | --- |\n| `conversation_id` | 是 | 目标会话 ID。 |\n| `turn_id` | 是 | 当前用户回合 ID。 |\n| `content` | 是 | Markdown 格式的用户可见内容。 |\n| `mq` | 是 | MQ发布消息的连接信息。 |\n\n`content` 必须是完成脱敏的用户可见 Markdown 文本，可包含思考摘要、工具调用摘要、阶段结果、终态结果、主动询问或错误说明。\n\n`content` 不得包含完整内部推理链、系统提示词、开发者提示词、原始工具参数、原始工具返回、连接串、密钥、令牌、未脱敏日志、异常堆栈或知识网络内部标识。\n\n## 工作流\n\n1. 校验 `conversation_id`、`turn_id`、`content` 是否齐全，且 `content` 为有效 Markdown 文本。\n2. 基于 `content` 做可见层结构化映射，识别输出意图：`thought`、`tool_call`、`clarification`、`result` 或 `error`；只允许表达重组，不得新增业务事实。\n3. 严格按 `ag-ui-response` 工作流执行生成、校验与发布；需要发布 MQ 时必须通过其技能内标准脚本完成。\n4. 校验失败时可重试生成与校验；仍失败则返回脱敏校验失败说明。\n5. MQ 发布参数缺失或发布失败时，必须停止并返回脱敏发布失败说明。\n6. 发布成功后返回结构化结果给调用方，包括 `status`、`intent`、`operation`、`message_id`、`sequence`、`event_id` 和用户可见摘要。\n\n## 重试约束\n\n- 若MQ消息发送失败则必须进行重试，最大重试次数为3次\n\n## 一致性与安全约束\n\n- 用户可见内容语义必须与 `content` 一致；可调整展示结构，但不得改变结论、遗漏关键事实或臆造新事实。\n- 主展示使用 `conversation.ui.layout-tree` 协议；不使用 `CUSTOM`、`RAW` 承载主 UI。\n- 只生成声明式 JSON 节点，不生成 HTML、CSS、JavaScript 或任意可执行代码。\n- 错误信息必须脱敏，说明当前状态、影响范围、可重试性和下一步，不暴露内部实现细节。\n\n## 返回给调用方\n\n成功时返回：\n\n- `status = published` 或 `status = validated`\n- `intent` 与 `operation`\n- `message_id`、`sequence`、`event_id`\n- 用户可见摘要\n\n失败时返回：\n\n- `status = failed`\n- `error_type`：`missing_skill`、`invalid_input`、`validation_failed`、`publish_config_missing` 或 `publish_failed`\n- 脱敏失败说明\n- 调用方必须停止的后续动作建议\n",
+  "dolphin": "",
+  "is_dolphin_mode": 0,
+  "pre_dolphin": [
+    {
+      "key": "memory_retrieve",
+      "name": "记忆召回模块",
+      "value": "\n@search_memory(query=$query, user_id=$header['x-account-id'], limit=50, threshold=0.5) -> relevant_memories\njson.dumps($relevant_memories[\"answer\"][\"result\"]) -> memory_str\n$_history + [{\"role\": \"system\", \"content\": \"Relevant memories: \" + $memory_str}] -> _history\n\n\"\" -> relevant_memories\n\"\" -> memory_str\n",
+      "enabled": true,
+      "edited": false
+    },
+    {
+      "key": "context_organize",
+      "name": "上下文组织模块",
+      "value": "\n{\"query\": \"用户的问题为: \"+$query} -> context\n",
+      "enabled": true,
+      "edited": false
+    }
+  ],
+  "post_dolphin": [],
+  "data_source": {
+    "kg": null,
+    "doc": null,
+    "metric": null,
+    "kn_entry": null,
+    "knowledge_network": [],
+    "advanced_config": null
+  },
+  "skills": {
+    "tools": [
+      {
+        "tool_id": "51382ef3-b35b-44a6-8a53-c670cbf53f10",
+        "tool_box_id": "f182d75a-7fd2-421a-a8e0-7064d75e39af",
+        "tool_timeout": 300,
+        "tool_input": [
+          {
+            "input_name": "page",
+            "input_type": "integer",
+            "input_desc": "页码，从 1 开始",
+            "map_type": "auto",
+            "map_value": "",
+            "enable": false
+          },
+          {
+            "input_name": "page_size",
+            "input_type": "integer",
+            "input_desc": "每页条数",
+            "map_type": "auto",
+            "map_value": "",
+            "enable": false
+          },
+          {
+            "input_name": "all",
+            "input_type": "boolean",
+            "input_desc": "是否跨所有业务域返回（false=仅当前业务域）",
+            "map_type": "auto",
+            "map_value": "",
+            "enable": false
+          },
+          {
+            "input_name": "X-Authorization",
+            "input_type": "string",
+            "input_desc": "OAuth Bearer token（格式：Bearer <token>）",
+            "map_type": "var",
+            "map_value": "header.authorization",
+            "enable": true
+          },
+          {
+            "input_name": "x-account-id",
+            "input_type": "string",
+            "input_desc": "调用方账户 ID（平台自动注入）",
+            "map_type": "var",
+            "map_value": "header.x-account-id",
+            "enable": false
+          },
+          {
+            "input_name": "x-account-type",
+            "input_type": "string",
+            "input_desc": "调用方账户类型（平台自动注入）",
+            "map_type": "var",
+            "map_value": "header.x-account-type",
+            "enable": false
+          },
+          {
+            "input_name": "x-business-domain",
+            "input_type": "string",
+            "input_desc": "业务域 ID（平台自动注入）",
+            "map_type": "fixedValue",
+            "map_value": "bd_public",
+            "enable": true
+          }
+        ],
+        "intervention": false,
+        "intervention_confirmation_message": "",
+        "result_process_strategies": null
+      }
+    ],
+    "agents": [],
+    "mcps": [],
+    "skills": null
+  },
+  "llms": [
+    {
+      "is_default": true,
+      "llm_config": {
+        "id": "2049448901597073408",
+        "name": "wh-qwen3.6-flash",
+        "model_type": "rlm",
+        "temperature": 1,
+        "top_p": 1,
+        "top_k": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "max_tokens": 32000
+      }
+    }
+  ],
+  "is_data_flow_set_enabled": 0,
+  "opening_remark_config": null,
+  "preset_questions": [],
+  "output": {
+    "variables": {
+      "answer_var": "answer",
+      "doc_retrieval_var": "doc_retrieval_res",
+      "graph_retrieval_var": "graph_retrieval_res",
+      "related_questions_var": "related_questions",
+      "other_vars": null,
+      "middle_output_vars": null
+    },
+    "default_format": "markdown"
+  },
+  "built_in_can_edit_fields": null,
+  "memory": {
+    "is_enabled": false
+  },
+  "related_question": {
+    "is_enabled": false
+  },
+  "plan_mode": {
+    "is_enabled": false
+  },
+  "conversation_history_config": {
+    "strategy": "count",
+    "count_params": {
+      "count_limit": 10
+    },
+    "time_window_params": null,
+    "token_limit_params": null
+  },
+  "metadata": {
+    "config_tpl_version": "v1",
+    "config_last_set_timestamp": 1777517145178855700
+  }
+}

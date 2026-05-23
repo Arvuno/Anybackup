@@ -1,0 +1,4 @@
+interface:
+  display_name: "V9 Release Packager"
+  short_description: "Assemble the AnyBackup Agent release package."
+  default_prompt: "Use this skill to align the release directory, charts, Ansible, scripts, and offline image layout for V9."

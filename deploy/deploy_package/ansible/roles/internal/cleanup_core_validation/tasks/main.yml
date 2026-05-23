@@ -1,0 +1,153 @@
+---
+- name: Resolve cleanup namespace list
+  ansible.builtin.set_fact:
+    cleanup_namespaces: "{{ cleanup.validation_namespaces | map('string') | map('trim') | reject('equalto', '') | unique | list }}"
+    cleanup_ingress_classes: "{{ cleanup.validation_ingress_classes | map('string') | map('trim') | reject('equalto', '') | unique | list }}"
+    cleanup_pvs: "{{ cleanup.validation_pvs | map('string') | map('trim') | reject('equalto', '') | unique | list }}"
+    cleanup_remote_paths: "{{ cleanup.remote_cleanup_paths | map('string') | map('trim') | reject('equalto', '') | unique | list }}"
+
+- name: Uninstall Helm releases in cleanup namespaces
+  ansible.builtin.shell: |
+    set -euo pipefail
+    ns="{{ item }}"
+    kubectl get namespace "${ns}" >/dev/null 2>&1 || exit 0
+    releases="$(helm list -n "${ns}" -q || true)"
+    if [ -n "${releases}" ]; then
+      while IFS= read -r release; do
+        [ -n "${release}" ] || continue
+        helm uninstall -n "${ns}" "${release}"
+      done <<< "${releases}"
+    fi
+  loop: "{{ cleanup_namespaces }}"
+  loop_control:
+    label: "{{ item }}"
+  changed_when: true
+
+- name: Delete cleanup namespaces
+  ansible.builtin.command: "kubectl delete namespace {{ item }} --ignore-not-found=true"
+  loop: "{{ cleanup_namespaces }}"
+  loop_control:
+    label: "{{ item }}"
+  changed_when: false
+
+- name: Wait for cleanup namespaces to terminate
+  ansible.builtin.shell: |
+    set -euo pipefail
+    ns="{{ item }}"
+    for _ in $(seq 1 120); do
+      if ! kubectl get namespace "${ns}" >/dev/null 2>&1; then
+        exit 0
+      fi
+      sleep 5
+    done
+    echo "namespace ${ns} still exists after waiting" >&2
+    exit 1
+  loop: "{{ cleanup_namespaces }}"
+  loop_control:
+    label: "{{ item }}"
+  changed_when: false
+
+- name: Delete cleanup ingress classes
+  ansible.builtin.command: "kubectl delete ingressclass {{ item }} --ignore-not-found=true"
+  loop: "{{ cleanup_ingress_classes }}"
+  loop_control:
+    label: "{{ item }}"
+  changed_when: false
+
+- name: Clear stale cleanup persistent volume claim refs
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - patch
+      - pv
+      - "{{ item }}"
+      - --type=merge
+      - --patch
+      - '{"spec":{"claimRef":null}}'
+  register: cleanup_pv_claimref_patch
+  failed_when: false
+  changed_when: cleanup_pv_claimref_patch.rc == 0
+  loop: "{{ cleanup_pvs }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Delete cleanup persistent volumes
+  ansible.builtin.command: "kubectl delete pv {{ item }} --ignore-not-found=true"
+  loop: "{{ cleanup_pvs }}"
+  loop_control:
+    label: "{{ item }}"
+  changed_when: false
+
+- name: Wait for cleanup persistent volumes to be deleted
+  ansible.builtin.shell: |
+    set -euo pipefail
+    pv="{{ item }}"
+    for _ in $(seq 1 60); do
+      if ! kubectl get pv "${pv}" >/dev/null 2>&1; then
+        exit 0
+      fi
+      sleep 2
+    done
+    echo "persistent volume ${pv} still exists after waiting" >&2
+    exit 1
+  loop: "{{ cleanup_pvs }}"
+  loop_control:
+    label: "{{ item }}"
+  changed_when: false
+
+- name: Stop Proton validation services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop: "{{ cleanup.proton_services }}"
+  loop_control:
+    label: "{{ item }}"
+  failed_when: false
+
+- name: Detect installed Proton validation packages
+  ansible.builtin.command: "rpm -q {{ item }}"
+  register: cleanup_proton_packages
+  changed_when: false
+  failed_when: false
+  loop: "{{ cleanup.proton_packages }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Remove installed Proton validation packages
+  ansible.builtin.command:
+    argv: "{{ ['yum', 'remove', '-y'] + (cleanup_proton_packages.results | selectattr('rc', 'equalto', 0) | map(attribute='item') | list) }}"
+  when: (cleanup_proton_packages.results | selectattr('rc', 'equalto', 0) | list | length) > 0
+
+- name: Remove proton-cli binary from remote host
+  ansible.builtin.file:
+    path: "{{ proton_cli.remote_bin_path }}"
+    state: absent
+
+- name: Remove containerd registry override for Proton local registry
+  ansible.builtin.file:
+    path: "{{ cleanup.containerd_registry_override_dir }}"
+    state: absent
+  register: cleanup_containerd_registry_override
+
+- name: Restart containerd when Proton registry override was removed
+  ansible.builtin.systemd:
+    name: containerd
+    state: restarted
+  when: cleanup_containerd_registry_override.changed
+
+- name: Remove remote validation working directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ cleanup_remote_paths }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Print cleanup summary
+  ansible.builtin.debug:
+    msg:
+      - "Cleanup namespaces: {{ cleanup_namespaces | join(', ') }}"
+      - "Cleanup ingress classes: {{ cleanup_ingress_classes | join(', ') }}"
+      - "Cleanup PVs: {{ cleanup_pvs | join(', ') }}"
+      - "Removed Proton packages: {{ (cleanup_proton_packages.results | selectattr('rc', 'equalto', 0) | map(attribute='item') | list) | join(', ') if (cleanup_proton_packages.results | selectattr('rc', 'equalto', 0) | list | length) > 0 else 'none' }}"

@@ -1,0 +1,6 @@
+---
+- name: Stop when the deprecated legacy KWeaver role is invoked
+  ansible.builtin.fail:
+    msg: >-
+      The legacy internal/kweaver_core role has been retired from the default release flow.
+      Use the online KWeaver Core path instead: internal/kweaver_online_install.

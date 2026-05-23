@@ -1,0 +1,24 @@
+---
+type: relation_type
+id: strategy_tpl_constrained_by_risk_rule
+name: 策略模板受风险规则约束
+tags: [Database, 恢复, 经验知识, 风险]
+---
+
+## RelationType: 策略模板受风险规则约束
+
+恢复策略模板通过 `strategyTemplateId` 关联风险规则，用于表达采用该方案前需要遵循哪些风险控制和审批要求。该关系仅覆盖绑定了 `strategyTemplateId` 的模板风险规则，不覆盖 `strategyTemplateId` 为空的通用风险规则。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| recovery_strategy_template | risk_rule | direct |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| strategyTemplateId | strategyTemplateId |
+
+Generic risk rules with an empty `strategyTemplateId` are evaluated separately by the agent, for example when a candidate strategy is inferred or unverified.
