@@ -235,3 +235,6 @@ Contributions are welcome as the project evolves. Before submitting a pull reque
 4. Run checks for the component you modified.
 
 Detailed contribution guidelines will be expanded as the public development workflow matures.
+
+## Contributing
+PRs welcome!
