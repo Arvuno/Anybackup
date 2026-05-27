@@ -190,7 +190,7 @@ Do not require customers to pass `--foundation-client-package-path` in the norma
 
 ## Foundation AK/SK Rules
 
-Foundation AK/SK must be generated manually in the Foundation web console after Foundation is installed.
+Foundation AK/SK must be generated mannually in the Foundation web console after Foundation is installed.
 
 This means the one-click flow may have a human checkpoint:
 
