@@ -41,7 +41,7 @@ Runtime artifacts, image tarballs, old packages, and one-off transfer files belo
 2. KWeaver Core success is determined by the upstream official install command exit code.
 3. Foundation is a complete product. Automation may copy, extract, install, uninstall, and verify it, but must not modify Foundation package contents or installer scripts.
 4. Never hard-code passwords, AK/SK, API keys, KWeaver tokens, database credentials, generated values, command examples, or logs.
-5. Foundation AK/SK is obtained manually from the Foundation web console and injected only through hidden input, environment variables, or Kubernetes Secrets.
+5. Foundation AK/SK is obtained mannually from the Foundation web console and injected only through hidden input, environment variables, or Kubernetes Secrets.
 6. Foundation MariaDB/Vega password is separate from Foundation AK/SK and is only used for DataView creation.
 7. `foundation-cli` sandbox injection happens after KWeaver Core succeeds and before business services are released. Keep the generated Dockerfile compatible with older Docker engines; do not use BuildKit-only syntax such as `COPY --chmod`.
 8. The temporary `mf-model-api` image override stays explicit until the upstream alpha compatibility issue is retired.
