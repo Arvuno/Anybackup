@@ -238,3 +238,6 @@ Detailed contribution guidelines will be expanded as the public development work
 
 ## Contributing
 PRs welcome!
+
+<!-- Contributor: Arvuno - documentation update -->
+
